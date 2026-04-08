@@ -1,0 +1,1778 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Eventra – Add New Event</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --rose:         #f4a7b9;
+      --peach:        #f9c784;
+      --lavender:     #c9b8f0;
+      --sky:          #a8d8f0;
+      --mint:         #aaecdc;
+      --glass-bg:     rgba(255,255,255,0.55);
+      --glass-border: rgba(255,255,255,0.75);
+      --shadow:       0 8px 40px rgba(180,120,140,0.18);
+      --text-dark:    #3a2a3e;
+      --text-mid:     #7a6080;
+      --text-light:   #b8a8c0;
+      --radius:       20px;
+      --nav-h:        72px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: linear-gradient(135deg, #fde8f0 0%, #fef3e2 30%, #e8eaff 65%, #e0f7f4 100%);
+      min-height: 100vh;
+      color: var(--text-dark);
+      overflow-x: hidden;
+    }
+
+    .blob { position:fixed; border-radius:50%; filter:blur(80px); opacity:.4; pointer-events:none; z-index:0; }
+    .blob-1 { width:420px; height:420px; background:var(--rose);     top:-100px; left:-100px; }
+    .blob-2 { width:340px; height:340px; background:var(--lavender); top:45%;   right:-80px; }
+    .blob-3 { width:280px; height:280px; background:var(--mint);     bottom:-60px; left:35%; }
+
+    nav {
+      position:fixed; top:0; left:0; right:0; z-index:100;
+      height:var(--nav-h);
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 5%;
+      background:rgba(255,248,245,0.72);
+      backdrop-filter:blur(18px);
+      border-bottom:1px solid var(--glass-border);
+      box-shadow:0 2px 24px rgba(200,140,160,0.10);
+    }
+    .nav-logo {
+      font-family:'Playfair Display',serif;
+      font-size:1.6rem; font-weight:900;
+      background:linear-gradient(135deg,#e07090,#a070d0,#50b8d8);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+      text-decoration:none;
+    }
+    .nav-links { display:flex; gap:2rem; list-style:none; }
+    .nav-links a {
+      text-decoration:none; font-size:.95rem; font-weight:500;
+      color:var(--text-mid); transition:color .25s; position:relative;
+    }
+    .nav-links a::after {
+      content:''; position:absolute; bottom:-3px; left:0; right:0;
+      height:2px; border-radius:2px;
+      background:linear-gradient(90deg,var(--rose),var(--lavender));
+      transform:scaleX(0); transition:transform .25s;
+    }
+    .nav-links a:hover { color:var(--text-dark); }
+    .nav-links a:hover::after { transform:scaleX(1); }
+    .nav-links a.active { color:var(--text-dark); }
+    .nav-links a.active::after { transform:scaleX(1); }
+
+    .btn {
+      display:inline-flex; align-items:center; gap:.5rem;
+      padding:.72rem 1.6rem; border:none; cursor:pointer;
+      border-radius:50px; font-family:'DM Sans',sans-serif;
+      font-size:.93rem; font-weight:600;
+      transition:transform .2s, box-shadow .2s, filter .2s;
+      text-decoration:none;
+    }
+    .btn:hover { transform:translateY(-2px); filter:brightness(1.06); }
+    .btn-primary {
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      color:#fff; box-shadow:0 6px 28px rgba(160,80,180,.35);
+    }
+    .btn-ghost {
+      background:var(--glass-bg); backdrop-filter:blur(10px);
+      border:1.5px solid var(--glass-border); color:var(--text-dark);
+    }
+
+    .page-header {
+      position:relative; z-index:1;
+      padding: calc(var(--nav-h) + 2.5rem) 5% 2rem;
+    }
+    .breadcrumb {
+      display:flex; align-items:center; gap:.5rem;
+      font-size:.83rem; color:var(--text-light); margin-bottom:1.2rem;
+    }
+    .breadcrumb a { color:var(--text-mid); text-decoration:none; transition:color .2s; }
+    .breadcrumb a:hover { color:var(--text-dark); }
+    .section-tag {
+      display:inline-flex; align-items:center; gap:.4rem;
+      font-size:.82rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+      color:var(--text-mid); margin-bottom:.7rem;
+    }
+    .section-tag::before {
+      content:''; display:block; width:20px; height:2px; border-radius:2px;
+      background:linear-gradient(90deg,var(--rose),var(--lavender));
+    }
+    .page-header h1 {
+      font-family:'Playfair Display',serif;
+      font-size:clamp(1.8rem,4vw,2.8rem); font-weight:900; line-height:1.2;
+    }
+    .page-header h1 span {
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .page-header p { font-size:.97rem; color:var(--text-mid); margin-top:.6rem; }
+
+    .progress-wrap {
+      position:relative; z-index:1;
+      padding:0 5% 2.5rem;
+    }
+    .progress-steps {
+      display:flex; align-items:center; gap:0;
+      background:var(--glass-bg); backdrop-filter:blur(16px);
+      border:1.5px solid var(--glass-border);
+      border-radius:60px; padding:.6rem 1.2rem;
+      box-shadow:var(--shadow); width:fit-content;
+    }
+    .step-item {
+      display:flex; align-items:center; gap:.5rem;
+      padding:.4rem .9rem; border-radius:50px;
+      font-size:.82rem; font-weight:600; color:var(--text-light);
+      cursor:pointer; transition:all .25s; white-space:nowrap;
+    }
+    .step-item.active { background:linear-gradient(135deg,#fde8f0,#e8eaff); color:#a070d0; }
+    .step-item.done   { color:var(--mint); }
+    .step-num {
+      width:22px; height:22px; border-radius:50%;
+      background:rgba(200,180,220,.2);
+      display:flex; align-items:center; justify-content:center;
+      font-size:.7rem; font-weight:800; transition:all .25s;
+    }
+    .step-item.active .step-num { background:linear-gradient(135deg,#e07090,#a070d0); color:#fff; }
+    .step-item.done   .step-num { background:linear-gradient(135deg,var(--mint),var(--sky)); color:#fff; }
+    .step-divider { width:24px; height:2px; background:rgba(200,180,220,.3); border-radius:2px; flex-shrink:0; }
+
+    .form-layout {
+      position:relative; z-index:1;
+      display:grid;
+      grid-template-columns:1fr 320px;
+      gap:2rem;
+      padding:0 5% 5rem;
+      align-items:start;
+    }
+
+    .glass-card {
+      background:var(--glass-bg); backdrop-filter:blur(16px);
+      border:1.5px solid var(--glass-border);
+      border-radius:var(--radius); padding:2rem;
+      box-shadow:var(--shadow);
+      animation: fadeUp .5s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(18px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .card-title {
+      font-family:'Playfair Display',serif;
+      font-size:1.15rem; font-weight:800;
+      color:var(--text-dark);
+      display:flex; align-items:center; gap:.5rem;
+      margin-bottom:1.5rem; padding-bottom:1rem;
+      border-bottom:1px solid rgba(200,180,220,.2);
+    }
+
+    .form-group  { margin-bottom:1.4rem; }
+    .form-row    { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; margin-bottom:1.4rem; }
+
+    label {
+      display:block; font-size:.82rem; font-weight:600;
+      color:var(--text-mid); margin-bottom:.45rem;
+    }
+    .required { color:#e07090; margin-left:2px; }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="time"],
+    input[type="number"],
+    input[type="email"],
+    input[type="url"],
+    select,
+    textarea {
+      width:100%; padding:.8rem 1.1rem;
+      background:rgba(255,255,255,.65);
+      border:1.5px solid rgba(200,180,220,.35);
+      border-radius:14px;
+      font-family:'DM Sans',sans-serif; font-size:.92rem;
+      color:var(--text-dark); outline:none;
+      transition:border-color .25s, box-shadow .25s;
+      appearance:none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color:var(--lavender);
+      box-shadow:0 0 0 3px rgba(201,184,240,.2);
+    }
+    input::placeholder, textarea::placeholder { color:var(--text-light); }
+    textarea { resize:vertical; min-height:120px; line-height:1.6; }
+    select {
+      cursor:pointer;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b8a8c0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 1rem center; padding-right:2.5rem;
+    }
+    .input-hint { font-size:.75rem; color:var(--text-light); margin-top:.35rem; }
+
+    .char-wrap { position:relative; }
+    .char-count {
+      position:absolute; bottom:.7rem; right:.9rem;
+      font-size:.72rem; color:var(--text-light); pointer-events:none;
+    }
+
+    .upload-zone {
+      border:2px dashed rgba(201,184,240,.5);
+      border-radius:16px; padding:2.5rem 1.5rem;
+      text-align:center; cursor:pointer;
+      background:rgba(255,255,255,.4);
+      transition:all .25s; position:relative;
+    }
+    .upload-zone:hover {
+      border-color:var(--lavender);
+      background:linear-gradient(135deg,rgba(253,232,240,.4),rgba(232,234,255,.4));
+    }
+    .upload-zone input[type="file"] {
+      position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;
+    }
+    .upload-icon { font-size:2.2rem; margin-bottom:.7rem; }
+    .upload-text { font-size:.88rem; font-weight:600; color:var(--text-mid); margin-bottom:.3rem; }
+    .upload-sub  { font-size:.75rem; color:var(--text-light); }
+    .upload-preview { display:none; flex-wrap:wrap; gap:.7rem; margin-top:1rem; }
+    .preview-img {
+      width:72px; height:72px; border-radius:10px;
+      object-fit:cover; border:2px solid var(--glass-border);
+    }
+
+    .ticket-tiers { display:flex; flex-direction:column; gap:1rem; }
+    .tier-card {
+      background:linear-gradient(135deg,rgba(253,232,240,.4),rgba(232,234,255,.4));
+      border:1.5px solid var(--glass-border); border-radius:14px; padding:1.2rem;
+      display:flex; align-items:center; gap:1rem; flex-wrap:wrap;
+    }
+    .tier-color { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+    .tier-fields { display:flex; gap:.8rem; flex:1; flex-wrap:wrap; }
+    .tier-fields input { flex:1; min-width:100px; margin:0; }
+    .tier-remove {
+      width:30px; height:30px; border-radius:50%;
+      background:rgba(244,167,185,.25); border:none;
+      color:#e07090; font-size:1rem; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:background .2s; flex-shrink:0;
+    }
+    .tier-remove:hover { background:rgba(244,167,185,.5); }
+    .add-tier-btn {
+      display:flex; align-items:center; justify-content:center; gap:.5rem;
+      padding:.7rem; border-radius:14px;
+      border:2px dashed rgba(201,184,240,.5);
+      background:transparent; cursor:pointer;
+      font-size:.85rem; font-weight:600; color:var(--text-mid);
+      transition:all .2s; width:100%;
+    }
+    .add-tier-btn:hover {
+      border-color:var(--lavender); color:#a070d0;
+      background:linear-gradient(135deg,rgba(253,232,240,.3),rgba(232,234,255,.3));
+    }
+
+    .toggle-row {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.9rem 1.1rem;
+      background:rgba(255,255,255,.4);
+      border:1.5px solid rgba(200,180,220,.25);
+      border-radius:14px; margin-bottom:.8rem;
+    }
+    .toggle-info h4 { font-size:.88rem; font-weight:600; margin-bottom:.15rem; }
+    .toggle-info p  { font-size:.75rem; color:var(--text-light); }
+    .toggle { position:relative; width:44px; height:24px; flex-shrink:0; }
+    .toggle input { opacity:0; width:0; height:0; }
+    .toggle-slider {
+      position:absolute; inset:0; border-radius:24px;
+      background:rgba(200,180,220,.35); cursor:pointer; transition:background .25s;
+    }
+    .toggle-slider::before {
+      content:''; position:absolute;
+      width:18px; height:18px; border-radius:50%;
+      background:#fff; top:3px; left:3px;
+      transition:transform .25s;
+      box-shadow:0 2px 6px rgba(0,0,0,.15);
+    }
+    .toggle input:checked + .toggle-slider { background:linear-gradient(135deg,#e07090,#a070d0); }
+    .toggle input:checked + .toggle-slider::before { transform:translateX(20px); }
+
+    .tags-wrap {
+      display:flex; flex-wrap:wrap; gap:.5rem;
+      padding:.6rem .8rem;
+      background:rgba(255,255,255,.65);
+      border:1.5px solid rgba(200,180,220,.35);
+      border-radius:14px; cursor:text;
+      min-height:48px; align-items:center;
+    }
+    .tags-wrap:focus-within { border-color:var(--lavender); box-shadow:0 0 0 3px rgba(201,184,240,.2); }
+    .tag-chip {
+      display:inline-flex; align-items:center; gap:.3rem;
+      background:linear-gradient(135deg,#fde8f0,#e8eaff);
+      border:1px solid var(--glass-border);
+      border-radius:50px; padding:.2rem .7rem;
+      font-size:.78rem; font-weight:600; color:#a070d0;
+    }
+    .tag-chip button {
+      background:none; border:none; cursor:pointer;
+      color:var(--text-light); font-size:.8rem; padding:0; line-height:1;
+    }
+    .tag-chip button:hover { color:#e07090; }
+    .tags-input {
+      border:none; background:transparent; outline:none;
+      font-family:'DM Sans',sans-serif; font-size:.88rem;
+      color:var(--text-dark); min-width:80px; flex:1;
+      padding:.2rem .3rem;
+    }
+
+    .form-left  { display:flex; flex-direction:column; gap:1.5rem; }
+    .form-right { display:flex; flex-direction:column; gap:1.5rem; position:sticky; top:calc(var(--nav-h) + 1.5rem); }
+
+    .preview-card {
+      background:var(--glass-bg); backdrop-filter:blur(16px);
+      border:1.5px solid var(--glass-border);
+      border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);
+    }
+    .preview-banner {
+      height:140px;
+      background:linear-gradient(135deg,#fde8f0,#e8d8ff,#d0eeff);
+      display:flex; align-items:center; justify-content:center;
+      font-size:3rem; position:relative;
+    }
+    .preview-body { padding:1.3rem; }
+    .preview-tag {
+      display:inline-block; padding:.22rem .65rem; border-radius:50px;
+      background:linear-gradient(135deg,#fde8f0,#e8eaff);
+      font-size:.72rem; font-weight:700; color:#a070d0; margin-bottom:.5rem;
+    }
+    .preview-title {
+      font-family:'Playfair Display',serif;
+      font-size:1rem; font-weight:800; margin-bottom:.5rem;
+      color:var(--text-dark); min-height:1.4rem;
+    }
+    .preview-meta { font-size:.78rem; color:var(--text-light); display:flex; flex-direction:column; gap:.25rem; }
+    .preview-price {
+      margin-top:.9rem; padding-top:.9rem;
+      border-top:1px solid rgba(200,180,220,.22);
+      font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:900;
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+
+    .tips-card {
+      background:linear-gradient(135deg,rgba(253,232,240,.6),rgba(232,234,255,.6));
+      backdrop-filter:blur(16px);
+      border:1.5px solid var(--glass-border);
+      border-radius:var(--radius); padding:1.5rem; box-shadow:var(--shadow);
+    }
+    .tips-card h4 { font-size:.9rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:.4rem; }
+    .tip-item {
+      display:flex; gap:.7rem; align-items:flex-start;
+      margin-bottom:.8rem; font-size:.82rem; color:var(--text-mid); line-height:1.5;
+    }
+    .tip-dot {
+      width:6px; height:6px; border-radius:50%;
+      background:linear-gradient(135deg,var(--rose),var(--lavender));
+      flex-shrink:0; margin-top:.45rem;
+    }
+
+    .form-actions {
+      display:flex; gap:1rem; flex-wrap:wrap;
+      padding:0 5% 5rem; position:relative; z-index:1;
+    }
+    .btn-submit {
+      padding:1rem 2.5rem; border:none; border-radius:50px;
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      color:#fff; font-family:'DM Sans',sans-serif;
+      font-size:1rem; font-weight:700; cursor:pointer;
+      box-shadow:0 6px 28px rgba(160,80,180,.35);
+      transition:transform .2s, filter .2s;
+    }
+    .btn-submit:hover { transform:translateY(-2px); filter:brightness(1.07); }
+    .btn-draft {
+      padding:1rem 2rem; border-radius:50px;
+      background:var(--glass-bg); backdrop-filter:blur(10px);
+      border:1.5px solid var(--glass-border);
+      font-family:'DM Sans',sans-serif;
+      font-size:1rem; font-weight:600; cursor:pointer;
+      color:var(--text-dark); transition:transform .2s;
+    }
+    .btn-draft:hover { transform:translateY(-2px); }
+
+    .toast {
+      position:fixed; bottom:2rem; right:2rem; z-index:9999;
+      background:var(--glass-bg); backdrop-filter:blur(20px);
+      border:1.5px solid var(--glass-border);
+      border-radius:16px; padding:1rem 1.5rem;
+      box-shadow:0 12px 40px rgba(160,100,180,.25);
+      display:flex; align-items:center; gap:.8rem;
+      transform:translateY(100px); opacity:0;
+      transition:all .4s cubic-bezier(.34,1.56,.64,1);
+      pointer-events:none;
+    }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast-icon { font-size:1.4rem; }
+    .toast-text h4 { font-size:.9rem; font-weight:700; }
+    .toast-text p  { font-size:.78rem; color:var(--text-mid); }
+
+    footer {
+      position:relative; z-index:1;
+      background:rgba(255,248,245,.72); backdrop-filter:blur(16px);
+      border-top:1px solid var(--glass-border);
+      padding:3rem 5% 1.5rem;
+      display:flex; flex-wrap:wrap; gap:2rem;
+      justify-content:space-between; align-items:flex-start;
+    }
+    .footer-brand p { font-size:.85rem; color:var(--text-light); margin-top:.5rem; max-width:220px; }
+    .footer-links h4 { font-size:.88rem; font-weight:700; margin-bottom:.8rem; }
+    .footer-links a  { display:block; font-size:.83rem; color:var(--text-mid); text-decoration:none; margin-bottom:.4rem; transition:color .2s; }
+    .footer-links a:hover { color:var(--text-dark); }
+    .footer-bottom {
+      width:100%; border-top:1px solid rgba(200,180,220,.25);
+      padding-top:1rem; margin-top:1rem;
+      display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.5rem;
+    }
+    .footer-bottom p { font-size:.78rem; color:var(--text-light); }
+
+    /* ── Language Toggle ── */
+    .lang-toggle {
+      display:flex; align-items:center; gap:0;
+      background:rgba(255,255,255,0.45); backdrop-filter:blur(12px);
+      border:1.5px solid var(--glass-border);
+      border-radius:50px; padding:3px;
+      box-shadow:0 2px 12px rgba(160,100,180,.12);
+    }
+    .lang-btn {
+      padding:.35rem .85rem; border:none; border-radius:50px;
+      font-family:'DM Sans',sans-serif; font-size:.78rem; font-weight:600;
+      cursor:pointer; transition:all .25s ease; background:transparent;
+      color:var(--text-mid); line-height:1;
+    }
+    .lang-btn.active { background:linear-gradient(135deg,#e07090,#a070d0); color:#fff; box-shadow:0 3px 10px rgba(160,80,180,.3); }
+    .lang-btn:not(.active):hover { color:var(--text-dark); background:rgba(255,255,255,.5); }
+
+    @media(max-width:900px) {
+      .form-layout { grid-template-columns:1fr; }
+      .form-right  { position:static; }
+      .progress-steps { flex-wrap:wrap; border-radius:16px; }
+    }
+    @media(max-width:600px) {
+      .form-row { grid-template-columns:1fr; }
+      footer { flex-direction:column; }
+    }
+
+    /* ═══════════════════════════════
+       CHATBOT STYLES
+    ═══════════════════════════════ */
+    #chat-fab {
+      position:fixed; bottom:28px; right:28px; z-index:9999;
+      width:60px; height:60px; border-radius:50%;
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      border:none; cursor:pointer;
+      box-shadow:0 8px 32px rgba(160,80,180,.4);
+      display:flex; align-items:center; justify-content:center; font-size:1.5rem;
+      transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s;
+      animation:fab-pulse 3s ease-in-out infinite;
+    }
+    #chat-fab:hover { transform:scale(1.12); box-shadow:0 12px 40px rgba(160,80,180,.55); }
+    #chat-fab.open  { animation:none; transform:rotate(45deg) scale(1); }
+    @keyframes fab-pulse {
+      0%,100% { box-shadow:0 8px 32px rgba(160,80,180,.4); }
+      50%      { box-shadow:0 8px 44px rgba(160,80,180,.7); }
+    }
+    #chat-badge {
+      position:fixed; bottom:96px; right:28px; z-index:10000;
+      background:#e07090; color:#fff; font-size:.68rem; font-weight:800;
+      padding:.15rem .55rem; border-radius:50px; border:2px solid #fff8f5;
+      display:none; animation:badge-pop .3s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes badge-pop { from{transform:scale(0);} to{transform:scale(1);} }
+    #chat-window {
+      position:fixed; bottom:100px; right:28px; z-index:9998;
+      width:380px; max-width:calc(100vw - 40px);
+      height:560px; max-height:calc(100vh - 140px);
+      background:rgba(255,248,250,.95); backdrop-filter:blur(24px);
+      border:1.5px solid var(--glass-border); border-radius:24px;
+      box-shadow:0 20px 60px rgba(160,80,180,.22), 0 4px 16px rgba(0,0,0,.06);
+      display:flex; flex-direction:column; overflow:hidden;
+      transform:scale(.85) translateY(20px); opacity:0; pointer-events:none;
+      transition:transform .3s cubic-bezier(.34,1.56,.64,1), opacity .25s ease;
+    }
+    #chat-window.open { transform:scale(1) translateY(0); opacity:1; pointer-events:all; }
+    .chat-header {
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      padding:1rem 1.2rem; display:flex; align-items:center; gap:.85rem; flex-shrink:0;
+    }
+    .chat-av-wrap { position:relative; }
+    .chat-av {
+      width:40px; height:40px; border-radius:50%;
+      background:rgba(255,255,255,.25); border:2px solid rgba(255,255,255,.5);
+      display:flex; align-items:center; justify-content:center; font-size:1.2rem;
+    }
+    .chat-av-wrap::after {
+      content:''; position:absolute; bottom:1px; right:1px;
+      width:10px; height:10px; border-radius:50%;
+      background:#5df0b0; border:2px solid #a070d0;
+    }
+    .chat-header-info { flex:1; }
+    .chat-title    { font-size:.95rem; font-weight:800; color:#fff; }
+    .chat-subtitle { font-size:.72rem; color:rgba(255,255,255,.8); margin-top:.1rem; }
+    .chat-lang-pill {
+      display:flex; gap:3px; background:rgba(255,255,255,.2); border-radius:50px; padding:3px;
+    }
+    .chat-lang-pill button {
+      padding:.22rem .65rem; border:none; border-radius:50px;
+      font-size:.7rem; font-weight:700; cursor:pointer;
+      background:transparent; color:rgba(255,255,255,.8); transition:all .2s;
+    }
+    .chat-lang-pill button.active { background:rgba(255,255,255,.35); color:#fff; }
+    .chat-close {
+      background:rgba(255,255,255,.2); border:none; cursor:pointer;
+      width:30px; height:30px; border-radius:50%; color:#fff;
+      font-size:.9rem; display:flex; align-items:center; justify-content:center; transition:background .2s;
+    }
+    .chat-close:hover { background:rgba(255,255,255,.35); }
+    #voice-status {
+      display:none; padding:.4rem 1rem; font-size:.75rem; font-weight:600;
+      color:#a070d0; background:rgba(201,184,240,.15);
+      border-top:1px solid rgba(201,184,240,.2); text-align:center; flex-shrink:0;
+    }
+    #chat-messages {
+      flex:1; overflow-y:auto; padding:1rem;
+      display:flex; flex-direction:column; gap:.75rem; scroll-behavior:smooth;
+    }
+    #chat-messages::-webkit-scrollbar { width:4px; }
+    #chat-messages::-webkit-scrollbar-thumb { background:rgba(160,80,180,.2); border-radius:4px; }
+    .msg-row { display:flex; gap:.6rem; align-items:flex-end; animation:msg-in .3s cubic-bezier(.34,1.56,.64,1); }
+    @keyframes msg-in { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:none;} }
+    .msg-row.user { flex-direction:row-reverse; }
+    .msg-av {
+      width:28px; height:28px; border-radius:50%; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:.75rem; font-weight:800; color:#fff;
+    }
+    .msg-av.bot  { background:linear-gradient(135deg,#e07090,#a070d0); }
+    .msg-av.user { background:linear-gradient(135deg,var(--lavender),var(--sky)); }
+    .msg-bubble {
+      max-width:78%; padding:.7rem .95rem; border-radius:18px;
+      font-size:.85rem; line-height:1.55; word-break:break-word;
+    }
+    .msg-bubble.bot  { background:var(--glass-bg); border:1.5px solid var(--glass-border); color:var(--text-dark); border-bottom-left-radius:5px; }
+    .msg-bubble.user { background:linear-gradient(135deg,#e07090,#a070d0); color:#fff; border-bottom-right-radius:5px; }
+    .msg-time { font-size:.62rem; color:var(--text-light); margin-top:.3rem; text-align:right; }
+    .typing-indicator {
+      display:flex; gap:4px; align-items:center; padding:.6rem .9rem;
+      background:var(--glass-bg); border:1.5px solid var(--glass-border);
+      border-radius:18px; border-bottom-left-radius:5px; width:fit-content;
+    }
+    .typing-dot { width:7px; height:7px; border-radius:50%; background:var(--lavender); animation:typing-bounce 1.3s ease-in-out infinite; }
+    .typing-dot:nth-child(2){animation-delay:.2s;}
+    .typing-dot:nth-child(3){animation-delay:.4s;}
+    @keyframes typing-bounce { 0%,60%,100%{transform:translateY(0);} 30%{transform:translateY(-6px);background:#a070d0;} }
+    .chips-row { padding:.5rem 1rem .2rem; display:flex; gap:.5rem; flex-wrap:wrap; flex-shrink:0; }
+    .chip {
+      font-size:.74rem; font-weight:600; color:#a070d0;
+      background:rgba(201,184,240,.18); border:1.5px solid rgba(201,184,240,.4);
+      border-radius:50px; padding:.3rem .8rem; cursor:pointer;
+      transition:background .2s, transform .15s; white-space:nowrap;
+    }
+    .chip:hover { background:rgba(201,184,240,.35); transform:translateY(-1px); }
+    .chat-input-wrap {
+  padding:.85rem 1rem;
+  border-top:1px solid rgba(200,180,220,.18);
+  display:flex;
+  gap:.5rem;
+  align-items:center;
+  background:rgba(255,255,255,.5);
+  flex-shrink:0;
+}
+
+#chat-input {
+  flex: 1;
+  border: 1.5px solid rgba(200,180,220,.4);
+  border-radius: 14px;
+  padding: .55rem .85rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .85rem;
+  color: var(--text-dark);
+  background: rgba(255,255,255,.7);
+  resize: none;
+  outline: none;
+  height: 42px;
+  min-height: 42px;
+  max-height: 42px;
+  line-height: 1.3;
+  overflow-y: hidden;
+  box-sizing: border-box;
+}
+    #chat-input:focus { border-color:#a070d0; }
+    #chat-input::placeholder { color:var(--text-light); }
+    #voice-btn {
+      width:38px; height:38px; border-radius:50%; border:none; flex-shrink:0;
+      background:rgba(201,184,240,.25); color:#a070d0; font-size:1rem;
+      display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .2s;
+    }
+    #voice-btn:hover { background:rgba(201,184,240,.45); transform:scale(1.08); }
+    #voice-btn.listening {
+      background:linear-gradient(135deg,#e07090,#a070d0); color:#fff;
+      animation:mic-pulse 1s ease-in-out infinite;
+    }
+    @keyframes mic-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(224,112,144,.5);} 50%{box-shadow:0 0 0 8px rgba(224,112,144,0);} }
+    .speak-btn {
+      background:none; border:none; cursor:pointer; font-size:.75rem;
+      color:var(--text-light); padding:.1rem .3rem; margin-top:.2rem;
+      transition:color .2s; display:inline-flex; align-items:center; gap:.2rem;
+    }
+    .speak-btn:hover { color:#a070d0; }
+    .speak-btn.speaking { color:#e07090; }
+    #chat-send-btn {
+      width:38px; height:38px; border-radius:12px; border:none;
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      color:#fff; font-size:1rem; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:transform .2s, opacity .2s; flex-shrink:0;
+    }
+    #chat-send-btn:hover { transform:scale(1.08); }
+    #chat-send-btn:disabled { opacity:.45; transform:none; cursor:default; }
+    #chat-clear-btn {
+      background:none; border:none; cursor:pointer;
+      font-size:.72rem; color:var(--text-light); padding:0 .2rem;
+      transition:color .2s; flex-shrink:0;
+    }
+    #chat-clear-btn:hover { color:#e07090; }
+    .msg-error {
+      font-size:.78rem; color:#e07090; background:#fde8f0;
+      border:1.5px solid #f4a7b9; border-radius:12px;
+      padding:.5rem .9rem; display:flex; align-items:center; gap:.4rem;
+    }
+    @media(max-width:480px) {
+      #chat-window { right:12px; width:calc(100vw - 24px); bottom:90px; }
+      #chat-fab    { right:16px; bottom:20px; }
+      #chat-badge  { right:16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <nav>
+    <a href="home.html" class="nav-logo">Eventra</a>
+    <ul class="nav-links">
+      <li><a href="home.html" data-en="Home" data-ta="முகப்பு">Home</a></li>
+      <li><a href="events.html" data-en="Events" data-ta="நிகழ்வுகள்">Events</a></li>
+      <li><a href="add-event.html" class="active" data-en="Add Event" data-ta="நிகழ்வு சேர்">Add Event</a></li>
+      <li><a href="dashboard.html" data-en="Dashboard" data-ta="டாஷ்போர்டு">Dashboard</a></li>
+    </ul>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" id="btn-ta" onclick="setLang('ta')">தமிழ்</button>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <div class="breadcrumb">
+      <a href="home.html" data-en="Home" data-ta="முகப்பு">Home</a>
+      <span>›</span>
+      <span style="color:var(--text-dark);" data-en="Create New Event" data-ta="புதிய நிகழ்வை உருவாக்கு">Create New Event</span>
+    </div>
+    <div class="section-tag" data-en="New Event" data-ta="புதிய நிகழ்வு">New Event</div>
+    <h1 data-en="Create Something <span>Memorable ✦</span>" data-ta="மறக்கமுடியாத <span>நிகழ்வை உருவாக்கு ✦</span>">Create Something <span>Memorable ✦</span></h1>
+    <p data-en="Fill in the details below and launch your event to the world in minutes." data-ta="கீழே உள்ள விவரங்களை நிரப்பி, நிமிடங்களில் உங்கள் நிகழ்வை உலகிற்கு அறிமுகப்படுத்துங்கள்.">Fill in the details below and launch your event to the world in minutes.</p>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-steps">
+      <div class="step-item active" onclick="goStep(1,this)">
+        <div class="step-num">1</div> <span data-en="Basic Info" data-ta="அடிப்படை தகவல்">Basic Info</span>
+      </div>
+      <div class="step-divider"></div>
+      <div class="step-item" onclick="goStep(2,this)">
+        <div class="step-num">2</div> <span data-en="Media &amp; Tags" data-ta="மீடியா &amp; குறிச்சொற்கள்">Media &amp; Tags</span>
+      </div>
+      <div class="step-divider"></div>
+      <div class="step-item" onclick="goStep(3,this)">
+        <div class="step-num">3</div> <span data-en="Tickets" data-ta="டிக்கெட்கள்">Tickets</span>
+      </div>
+      <div class="step-divider"></div>
+      <div class="step-item" onclick="goStep(4,this)">
+        <div class="step-num">4</div> <span data-en="Settings" data-ta="அமைப்புகள்">Settings</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-layout">
+    <div class="form-left">
+
+      <!-- Section 1: Basic Info -->
+      <div class="glass-card" id="section1">
+        <div class="card-title" data-en="📋 Basic Information" data-ta="📋 அடிப்படை தகவல்கள்">📋 Basic Information</div>
+        <div class="form-group">
+          <label data-en="Event Title <span class='required'>*</span>" data-ta="நிகழ்வின் தலைப்பு <span class='required'>*</span>">Event Title <span class="required">*</span></label>
+          <div class="char-wrap">
+            <input type="text" id="eventTitle" maxlength="80"
+              placeholder="e.g. UI/UX Masterclass 2025"
+              data-placeholder-en="e.g. UI/UX Masterclass 2025"
+              data-placeholder-ta="எ.கா. UI/UX மாஸ்டர்கிளாஸ் 2025"
+              oninput="updatePreview(); updateChar('eventTitle','titleCount',80)"/>
+            <span class="char-count" id="titleCount">0/80</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-en="Category <span class='required'>*</span>" data-ta="வகை <span class='required'>*</span>">Category <span class="required">*</span></label>
+          <select id="eventCat" onchange="updatePreview()">
+            <option value="" data-en="Select a category…" data-ta="ஒரு வகையைத் தேர்ந்தெடுக்கவும்…">Select a category…</option>
+            <option data-en="Workshop" data-ta="பயிற்சிப்பட்டறை">Workshop</option>
+            <option data-en="Music" data-ta="இசை">Music</option>
+            <option data-en="Tech" data-ta="தொழில்நுட்பம்">Tech</option>
+            <option data-en="Food" data-ta="உணவு">Food</option>
+            <option data-en="Sports" data-ta="விளையாட்டு">Sports</option>
+            <option data-en="Art" data-ta="கலை">Art</option>
+            <option data-en="Business" data-ta="வணிகம்">Business</option>
+            <option data-en="Wellness" data-ta="ஆரோக்கியம்">Wellness</option>
+            <option data-en="Other" data-ta="மற்றவை">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-en="Description <span class='required'>*</span>" data-ta="விளக்கம் <span class='required'>*</span>">Description <span class="required">*</span></label>
+          <div class="char-wrap">
+            <textarea id="eventDesc" maxlength="600" rows="5"
+              placeholder="Describe your event — what will attendees experience, learn or enjoy?"
+              data-placeholder-en="Describe your event — what will attendees experience, learn or enjoy?"
+              data-placeholder-ta="உங்கள் நிகழ்வை விவரிக்கவும் — பங்கேற்பாளர்கள் என்ன அனுபவிப்பார்கள், கற்றுக்கொள்வார்கள் அல்லது ரசிப்பார்கள்?"
+              oninput="updateChar('eventDesc','descCount',600)"></textarea>
+            <span class="char-count" id="descCount">0/600</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label data-en="Event Date <span class='required'>*</span>" data-ta="நிகழ்வு தேதி <span class='required'>*</span>">Event Date <span class="required">*</span></label>
+            <input type="date" id="eventDate" onchange="updatePreview()"/>
+          </div>
+          <div>
+            <label data-en="Start Time <span class='required'>*</span>" data-ta="தொடக்க நேரம் <span class='required'>*</span>">Start Time <span class="required">*</span></label>
+            <input type="time" id="eventTime" onchange="updatePreview()"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label data-en="End Time" data-ta="முடிவு நேரம்">End Time</label>
+            <input type="time" id="eventEndTime"/>
+          </div>
+          <div>
+            <label data-en="Event Mode <span class='required'>*</span>" data-ta="நிகழ்வு வடிவம் <span class='required'>*</span>">Event Mode <span class="required">*</span></label>
+            <select id="eventMode">
+              <option value="" data-en="Select mode…" data-ta="வடிவத்தைத் தேர்ந்தெடுக்கவும்…">Select mode…</option>
+              <option data-en="In-Person" data-ta="நேரில்">In-Person</option>
+              <option data-en="Online" data-ta="ஆன்லைன்">Online</option>
+              <option data-en="Hybrid" data-ta="கலப்பினம்">Hybrid</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-en="Venue / Location <span class='required'>*</span>" data-ta="இடம் / இருப்பிடம் <span class='required'>*</span>">Venue / Location <span class="required">*</span></label>
+          <input type="text" id="eventVenue"
+            placeholder="e.g. Design Hub, Bandra West, Mumbai"
+            data-placeholder-en="e.g. Design Hub, Bandra West, Mumbai"
+            data-placeholder-ta="எ.கா. டிசைன் ஹப், பாண்ட்ரா வெஸ்ட், மும்பை"
+            onchange="updatePreview()"/>
+          <div class="input-hint" data-en="For online events, add the platform name (e.g. Zoom, Google Meet)." data-ta="ஆன்லைன் நிகழ்வுகளுக்கு, தளத்தின் பெயரைச் சேர்க்கவும் (எ.கா. Zoom, Google Meet).">For online events, add the platform name (e.g. Zoom, Google Meet).</div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label data-en="City" data-ta="நகரம்">City</label>
+            <input type="text" id="eventCity"
+              placeholder="e.g. Mumbai"
+              data-placeholder-en="e.g. Mumbai"
+              data-placeholder-ta="எ.கா. சென்னை"/>
+          </div>
+          <div>
+            <label data-en="State / Country" data-ta="மாநிலம் / நாடு">State / Country</label>
+            <input type="text" id="eventState"
+              placeholder="e.g. Maharashtra, India"
+              data-placeholder-en="e.g. Maharashtra, India"
+              data-placeholder-ta="எ.கா. தமிழ்நாடு, இந்தியா"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Media & Tags -->
+      <div class="glass-card" id="section2">
+        <div class="card-title" data-en="🖼 Media &amp; Tags" data-ta="🖼 மீடியா &amp; குறிச்சொற்கள்">🖼 Media &amp; Tags</div>
+        <div class="form-group">
+          <label data-en="Event Cover Image" data-ta="நிகழ்வு அட்டை படம்">Event Cover Image</label>
+          <div class="upload-zone" id="uploadZone">
+            <input type="file" accept="image/*" multiple onchange="handleUpload(event)"/>
+            <div class="upload-icon">📸</div>
+            <div class="upload-text" data-en="Drop your image here or click to browse" data-ta="உங்கள் படத்தை இங்கே இழுக்கவும் அல்லது கிளிக் செய்யவும்">Drop your image here or click to browse</div>
+            <div class="upload-sub" data-en="PNG, JPG, WEBP · Max 5MB · Recommended 1200×630px" data-ta="PNG, JPG, WEBP · அதிகபட்சம் 5MB · பரிந்துரைக்கப்பட்டது 1200×630px">PNG, JPG, WEBP · Max 5MB · Recommended 1200×630px</div>
+          </div>
+          <div class="upload-preview" id="uploadPreview"></div>
+        </div>
+        <div class="form-group">
+          <label data-en="Event Emoji / Icon" data-ta="நிகழ்வு எமோஜி / ஐகான்">Event Emoji / Icon</label>
+          <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.2rem;">
+            <span class="emoji-opt" onclick="selectEmoji(this,'🎨')" style="font-size:1.6rem;cursor:pointer;padding:.3rem .5rem;border-radius:10px;transition:background .2s;">🎨</span>
+            <span class="emoji-opt" onclick="selectEmoji(this,'🎵')" style="font-size:1.6rem;cursor:pointer;padding:.3rem .5rem;border-radius:10px;transition:background .2s;">🎵</span>
+            <span class="emoji-opt" onclick="selectEmoji(this,'💻')" style="font-size:1.6rem;cursor:pointer;padding:.3rem .5rem;border-radius:10px;transition:background .2s;">💻</span>
+            <span class="emoji-opt" onclick="selectEmoji(this,'🍜')" style="font-size:1.6rem;cursor:pointer;padding:.3rem .5rem;border-radius:10px;transition:background .2s;">🍜</span>
+            <span class="emoji-opt" onclick="selectEmoji(this,'🏃')" style="font-size:1.6rem;cursor:pointer;padding:.3rem .5rem;border-radius:10px;transition:background .2s;">🏃</span>
+            <span class="emoji-opt" onclick="selectEmoji(this,'🖼')" style="font-size:1.6rem;cursor:pointer;padding:.3rem .5rem;border-radius:10px;transition:background .2s;">🖼</span>
+            <span class="emoji-opt" onclick="selectEmoji(this,'📸')" style="font-size:1.6rem;cursor:pointer;padding:.3rem .5rem;border-radius:10px;transition:background .2s;">📸</span>
+            <span class="emoji-opt" onclick="selectEmoji(this,'🎤')" style="font-size:1.6rem;cursor:pointer;padding:.3rem .5rem;border-radius:10px;transition:background .2s;">🎤</span>
+            <span class="emoji-opt" onclick="selectEmoji(this,'🚀')" style="font-size:1.6rem;cursor:pointer;padding:.3rem .5rem;border-radius:10px;transition:background .2s;">🚀</span>
+            <span class="emoji-opt" onclick="selectEmoji(this,'⚽')" style="font-size:1.6rem;cursor:pointer;padding:.3rem .5rem;border-radius:10px;transition:background .2s;">⚽</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>
+            <span data-en="Tags" data-ta="குறிச்சொற்கள்">Tags</span>
+            <span class="input-hint" style="font-weight:400;" data-en="(press Enter to add)" data-ta="(சேர்க்க Enter அழுத்தவும்)">(press Enter to add)</span>
+          </label>
+          <div class="tags-wrap" id="tagsWrap" onclick="document.getElementById('tagInput').focus()">
+            <input class="tags-input" id="tagInput"
+              placeholder="Add a tag…"
+              data-placeholder-en="Add a tag…"
+              data-placeholder-ta="ஒரு குறிச்சொல் சேர்க்கவும்…"
+              onkeydown="addTag(event)"/>
+          </div>
+          <div class="input-hint" data-en="e.g. design, figma, workshop, beginner-friendly" data-ta="எ.கா. வடிவமைப்பு, figma, பயிற்சி, தொடக்கநிலை">e.g. design, figma, workshop, beginner-friendly</div>
+        </div>
+        <div class="form-group">
+          <label data-en="Event Website / Link" data-ta="நிகழ்வு இணையதளம் / இணைப்பு">Event Website / Link</label>
+          <input type="url" placeholder="https://yourwebsite.com/event"
+            data-placeholder-en="https://yourwebsite.com/event"
+            data-placeholder-ta="https://உங்களிணையதளம்.com/நிகழ்வு"/>
+        </div>
+      </div>
+
+      <!-- Section 3: Tickets -->
+      <div class="glass-card" id="section3">
+        <div class="card-title" data-en="🎟 Tickets &amp; Pricing" data-ta="🎟 டிக்கெட்கள் &amp; கட்டணம்">🎟 Tickets &amp; Pricing</div>
+        <div class="ticket-tiers" id="tierList">
+          <div class="tier-card">
+            <div class="tier-color" style="background:linear-gradient(135deg,#e07090,#a070d0);"></div>
+            <div class="tier-fields">
+              <input type="text" placeholder="Tier name"
+                data-placeholder-en="Tier name"
+                data-placeholder-ta="நிலை பெயர்"
+                value="General Admission" style="flex:2;"/>
+              <input type="number" placeholder="Price (₹)" id="tier1Price" value="499" oninput="updatePreview()" style="flex:1;"/>
+              <input type="number" placeholder="Qty"
+                data-placeholder-en="Qty"
+                data-placeholder-ta="எண்ணிக்கை"
+                value="60" style="flex:1;"/>
+            </div>
+            <button class="tier-remove" onclick="removeTier(this)">✕</button>
+          </div>
+        </div>
+        <button class="add-tier-btn" style="margin-top:1rem;" onclick="addTier()" data-en="+ Add Ticket Tier" data-ta="+ டிக்கெட் நிலை சேர்">+ Add Ticket Tier</button>
+        <div style="margin-top:1.5rem;">
+          <div class="form-row">
+            <div>
+              <label data-en="Total Capacity <span class='required'>*</span>" data-ta="மொத்த இடக்கொள்ளளவு <span class='required'>*</span>">Total Capacity <span class="required">*</span></label>
+              <input type="number" placeholder="e.g. 100"
+                data-placeholder-en="e.g. 100"
+                data-placeholder-ta="எ.கா. 100"
+                value="60"/>
+            </div>
+            <div>
+              <label data-en="Registration Deadline" data-ta="பதிவு கடைசி தேதி">Registration Deadline</label>
+              <input type="date"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Settings -->
+      <div class="glass-card" id="section4">
+        <div class="card-title" data-en="⚙️ Event Settings" data-ta="⚙️ நிகழ்வு அமைப்புகள்">⚙️ Event Settings</div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <h4 data-en="🌐 Public Event" data-ta="🌐 பொது நிகழ்வு">🌐 Public Event</h4>
+            <p data-en="Anyone can discover and register for this event." data-ta="யாரும் இந்த நிகழ்வை கண்டுபிடித்து பதிவு செய்யலாம்.">Anyone can discover and register for this event.</p>
+          </div>
+          <label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <h4 data-en="✅ Require Approval" data-ta="✅ ஒப்புதல் தேவை">✅ Require Approval</h4>
+            <p data-en="Manually approve each registration request." data-ta="ஒவ்வொரு பதிவு கோரிக்கையையும் கைமுறையாக அங்கீகரிக்கவும்.">Manually approve each registration request.</p>
+          </div>
+          <label class="toggle"><input type="checkbox"/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <h4 data-en="🔔 Email Reminders" data-ta="🔔 மின்னஞ்சல் நினைவூட்டல்கள்">🔔 Email Reminders</h4>
+            <p data-en="Send automated reminders to registered participants." data-ta="பதிவு செய்த பங்கேற்பாளர்களுக்கு தானியங்கி நினைவூட்டல்கள் அனுப்பவும்.">Send automated reminders to registered participants.</p>
+          </div>
+          <label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <h4 data-en="🎟 QR Check-In" data-ta="🎟 QR சரிபார்ப்பு">🎟 QR Check-In</h4>
+            <p data-en="Generate QR codes for attendee check-in on the day." data-ta="நிகழ்வு நாளில் பங்கேற்பாளர்களின் நுழைவுக்கு QR குறியீடுகளை உருவாக்கவும்.">Generate QR codes for attendee check-in on the day.</p>
+          </div>
+          <label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <h4 data-en="💬 Enable Q&amp;A" data-ta="💬 கேள்வி-பதில் இயக்கு">💬 Enable Q&amp;A</h4>
+            <p data-en="Allow attendees to post questions before the event." data-ta="நிகழ்வுக்கு முன் பங்கேற்பாளர்கள் கேள்விகளை இடுகையிட அனுமதிக்கவும்.">Allow attendees to post questions before the event.</p>
+          </div>
+          <label class="toggle"><input type="checkbox"/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="form-group" style="margin-top:1.2rem;">
+          <label data-en="Cancellation Policy" data-ta="ரத்து கொள்கை">Cancellation Policy</label>
+          <select>
+            <option data-en="Free cancellation up to 48 hours before event" data-ta="நிகழ்வுக்கு 48 மணி நேரம் வரை இலவச ரத்து">Free cancellation up to 48 hours before event</option>
+            <option data-en="Free cancellation up to 7 days before event" data-ta="நிகழ்வுக்கு 7 நாட்கள் வரை இலவச ரத்து">Free cancellation up to 7 days before event</option>
+            <option data-en="No refunds after registration" data-ta="பதிவுக்குப் பிறகு பணம் திரும்பப் பெற முடியாது">No refunds after registration</option>
+            <option data-en="Full refund anytime" data-ta="எப்போதும் முழு பணத் திரும்பல்">Full refund anytime</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-en="Organiser Contact Email" data-ta="ஏற்பாட்டாளர் தொடர்பு மின்னஞ்சல்">Organiser Contact Email</label>
+          <input type="email" placeholder="organiser@example.com"
+            data-placeholder-en="organiser@example.com"
+            data-placeholder-ta="ஏற்பாட்டாளர்@எடுத்துக்காட்டு.com"/>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="form-right">
+      <div class="glass-card" style="padding:0;overflow:hidden;">
+        <div style="padding:1.2rem 1.5rem .8rem; border-bottom:1px solid rgba(200,180,220,.2);">
+          <div style="font-size:.82rem;font-weight:700;color:var(--text-mid);display:flex;align-items:center;gap:.4rem;" data-en="👁 Live Preview" data-ta="👁 நேரலை முன்னோட்டம்">👁 Live Preview</div>
+        </div>
+        <div style="border:none;box-shadow:none;border-radius:0;">
+          <div class="preview-banner" id="previewBanner">🎨</div>
+          <div class="preview-body">
+            <div class="preview-tag" id="previewTag" data-en="Category" data-ta="வகை">Category</div>
+            <div class="preview-title" id="previewTitle" data-en="Your event title will appear here…" data-ta="உங்கள் நிகழ்வு தலைப்பு இங்கே தோன்றும்…">Your event title will appear here…</div>
+            <div class="preview-meta">
+              <span id="previewDate" data-en="📅 Date &amp; Time" data-ta="📅 தேதி &amp; நேரம்">📅 Date &amp; Time</span>
+              <span id="previewVenue" data-en="📍 Venue / Location" data-ta="📍 இடம் / இருப்பிடம்">📍 Venue / Location</span>
+            </div>
+            <div class="preview-price" id="previewPrice">₹499</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tips-card">
+        <h4 data-en="💡 Tips for a Great Event" data-ta="💡 சிறந்த நிகழ்வுக்கான குறிப்புகள்">💡 Tips for a Great Event</h4>
+        <div class="tip-item"><div class="tip-dot"></div><span data-en="Use a clear, specific title — avoid vague names like &quot;Event 2025&quot;." data-ta="தெளிவான, குறிப்பிட்ட தலைப்பை பயன்படுத்துங்கள் — &quot;நிகழ்வு 2025&quot; போன்ற தெளிவற்ற பெயர்களை தவிர்க்கவும்.">Use a clear, specific title — avoid vague names like "Event 2025".</span></div>
+        <div class="tip-item"><div class="tip-dot"></div><span data-en="Add a high-quality cover image — events with photos get 3× more views." data-ta="உயர்தர அட்டை படம் சேர்க்கவும் — படங்களுடன் கூடிய நிகழ்வுகள் 3 மடங்கு அதிக பார்வைகளைப் பெறும்.">Add a high-quality cover image — events with photos get 3× more views.</span></div>
+        <div class="tip-item"><div class="tip-dot"></div><span data-en="Set an early-bird ticket tier to boost early registrations." data-ta="முந்தைய பதிவுகளை ஊக்குவிக்க ஆரம்ப கட்ட டிக்கெட் நிலை அமைக்கவும்.">Set an early-bird ticket tier to boost early registrations.</span></div>
+        <div class="tip-item"><div class="tip-dot"></div><span data-en="Include a detailed schedule so attendees know what to expect." data-ta="பங்கேற்பாளர்கள் என்ன எதிர்பார்க்கலாம் என்பதை அறிய விரிவான அட்டவணையை சேர்க்கவும்.">Include a detailed schedule so attendees know what to expect.</span></div>
+        <div class="tip-item"><div class="tip-dot"></div><span data-en="Share your event on social media right after publishing." data-ta="வெளியிட்ட உடனே சமூக ஊடகங்களில் உங்கள் நிகழ்வைப் பகிரவும்.">Share your event on social media right after publishing.</span></div>
+      </div>
+
+      <div class="glass-card">
+        <div style="font-size:.85rem;font-weight:600;color:var(--text-mid);margin-bottom:1rem;" data-en="Ready to go?" data-ta="தொடங்கலாமா?">Ready to go?</div>
+        <button class="btn-submit" style="width:100%;margin-bottom:.8rem;" onclick="submitEvent()" data-en="🚀 Publish Event" data-ta="🚀 நிகழ்வை வெளியிடு">🚀 Publish Event</button>
+        <button class="btn-draft"  style="width:100%;" onclick="saveDraft()" data-en="💾 Save as Draft" data-ta="💾 வரைவாக சேமி">💾 Save as Draft</button>
+        <div style="text-align:center;font-size:.73rem;color:var(--text-light);margin-top:.8rem;" data-en="You can edit your event after publishing." data-ta="வெளியிட்ட பிறகும் நிகழ்வை திருத்தலாம்.">You can edit your event after publishing.</div>
+      </div>
+
+      <div class="glass-card">
+        <div style="font-size:.85rem;font-weight:600;color:var(--text-mid);margin-bottom:1rem;" data-en="📨 My Event Requests" data-ta="📨 என் நிகழ்வு கோரிக்கைகள்">📨 My Event Requests</div>
+        <div id="myEventRequests" style="display:flex;flex-direction:column;gap:.55rem;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn-submit" onclick="submitEvent()" data-en="🚀 Publish Event" data-ta="🚀 நிகழ்வை வெளியிடு">🚀 Publish Event</button>
+    <button class="btn-draft"  onclick="saveDraft()" data-en="💾 Save as Draft" data-ta="💾 வரைவாக சேமி">💾 Save as Draft</button>
+    <a href="events.html" class="btn btn-ghost" data-en="Cancel" data-ta="ரத்து செய்">Cancel</a>
+  </div>
+
+  <div class="toast" id="toast">
+    <div class="toast-icon" id="toastIcon">🎉</div>
+    <div class="toast-text">
+      <h4 id="toastTitle">Event Published!</h4>
+      <p id="toastMsg">Your event is now live and visible to everyone.</p>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-brand">
+      <a href="home.html" class="nav-logo" style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;background:linear-gradient(135deg,#e07090,#a070d0,#50b8d8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none;">Eventra</a>
+      <p data-en="Smart event management designed for the modern creator." data-ta="நவீன படைப்பாளர்களுக்காக வடிவமைக்கப்பட்ட திறமையான நிகழ்வு மேலாண்மை.">Smart event management designed for the modern creator.</p>
+    </div>
+    <div class="footer-links">
+      <h4 data-en="Product" data-ta="தயாரிப்பு">Product</h4>
+      <a href="events.html" data-en="Browse Events" data-ta="நிகழ்வுகளை உலாவு">Browse Events</a>
+      <a href="add-event.html" data-en="Create Event" data-ta="நிகழ்வை உருவாக்கு">Create Event</a>
+      <a href="dashboard.html" data-en="Dashboard" data-ta="டாஷ்போர்டு">Dashboard</a>
+    </div>
+    <div class="footer-links">
+      <h4 data-en="Company" data-ta="நிறுவனம்">Company</h4>
+      <a href="#" data-en="About Us" data-ta="எங்களைப் பற்றி">About Us</a>
+      <a href="#" data-en="Blog" data-ta="வலைப்பதிவு">Blog</a>
+      <a href="#" data-en="Careers" data-ta="வேலை வாய்ப்புகள்">Careers</a>
+    </div>
+    <div class="footer-links">
+      <h4 data-en="Support" data-ta="ஆதரவு">Support</h4>
+      <a href="#" data-en="Help Centre" data-ta="உதவி மையம்">Help Centre</a>
+      <a href="#" data-en="Privacy Policy" data-ta="தனியுரிமைக் கொள்கை">Privacy Policy</a>
+      <a href="#" data-en="Terms of Service" data-ta="சேவை விதிமுறைகள்">Terms of Service</a>
+    </div>
+    <div class="footer-bottom">
+      <p data-en="© 2025 Eventra. Crafted with ♥ for event creators everywhere." data-ta="© 2025 Eventra. நிகழ்வு படைப்பாளர்களுக்காக ♥ உடன் உருவாக்கப்பட்டது.">© 2025 Eventra. Crafted with ♥ for event creators everywhere.</p>
+      <p data-en="🌍 All rights reserved." data-ta="🌍 அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.">🌍 All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════
+       CHATBOT HTML
+  ═══════════════════════════════════════ -->
+  <div id="chat-badge">1 new</div>
+  <button id="chat-fab" onclick="toggleChat()" title="Chat with Eventra AI">✨</button>
+
+  <div id="chat-window">
+    <div class="chat-header">
+      <div class="chat-av-wrap"><div class="chat-av">🤖</div></div>
+      <div class="chat-header-info">
+        <div class="chat-title" id="chat-title-text">Eventra AI Assistant</div>
+        <div class="chat-subtitle" id="chat-subtitle-text">Powered by Groq · Voice enabled 🎤</div>
+      </div>
+      <div class="chat-lang-pill">
+        <button id="chat-btn-en" class="active" onclick="setChatLang('en')">EN</button>
+        <button id="chat-btn-ta" onclick="setChatLang('ta')">தமிழ்</button>
+      </div>
+      <button class="chat-close" onclick="toggleChat()" title="Close">✕</button>
+    </div>
+    <div id="voice-status">🎤 கேட்கிறேன்… பேசுங்கள்</div>
+    <div id="chat-messages"></div>
+    <div class="chips-row" id="chips-row"></div>
+    <div class="chat-input-wrap">
+  <button id="chat-clear-btn" onclick="clearChat()" title="Clear chat">🗑</button>
+  <textarea id="chat-input" rows="1"
+    onkeydown="handleChatKey(event)"></textarea>
+  <button id="voice-btn" onclick="toggleVoice()" title="Voice input">🎤</button>
+  <button id="chat-send-btn" onclick="sendMessage()" title="Send">➤</button>
+</div>
+  </div>
+
+  <script>
+    /* ══════════════════════════════════════
+       FORM LOGIC
+    ══════════════════════════════════════ */
+    let selectedEmoji = '🎨';
+    let selectedCoverImage = '';
+    let currentLang = localStorage.getItem('eventra-lang') || 'en';
+    const EVENT_REQUESTS_KEY = 'eventra_event_requests';
+
+    function getEventRequests() {
+      try {
+        return JSON.parse(localStorage.getItem(EVENT_REQUESTS_KEY)) || [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveEventRequests(requests) {
+      localStorage.setItem(EVENT_REQUESTS_KEY, JSON.stringify(requests));
+    }
+
+    function getLoggedInEmail() {
+      return (localStorage.getItem('email') || '').trim().toLowerCase();
+    }
+
+    function escHtml(val) {
+      return String(val || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function requestBadge(status) {
+      if (status === 'approved') {
+        return 'background:#e0fff8;color:#309f72;';
+      }
+      if (status === 'rejected') {
+        return 'background:#fde8f0;color:#d85f7e;';
+      }
+      return 'background:#fff3e0;color:#c98735;';
+    }
+
+    function requestLabel(status) {
+      if (currentLang === 'ta') {
+        if (status === 'approved') return 'அங்கீகரிக்கப்பட்டது';
+        if (status === 'rejected') return 'நிராகரிக்கப்பட்டது';
+        return 'நிலுவையில்';
+      }
+      if (status === 'approved') return 'Approved';
+      if (status === 'rejected') return 'Rejected';
+      return 'Pending';
+    }
+
+    function renderMyEventRequests() {
+      const wrap = document.getElementById('myEventRequests');
+      if (!wrap) return;
+
+      const email = getLoggedInEmail();
+      const allRequests = getEventRequests();
+      const myRequests = email
+        ? allRequests.filter(r => (r.organiserEmail || '').toLowerCase() === email)
+        : [];
+
+      if (!myRequests.length) {
+        wrap.innerHTML = `<div style="font-size:.78rem;color:var(--text-light);line-height:1.55;">${
+          currentLang === 'ta'
+            ? 'இன்னும் கோரிக்கைகள் இல்லை. நிகழ்வை உருவாக்கி நிர்வாக ஒப்புதலுக்காக அனுப்புங்கள்.'
+            : 'No requests yet. Create an event and send it for admin approval.'
+        }</div>`;
+        return;
+      }
+
+      const recent = myRequests
+        .slice()
+        .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+        .slice(0, 4);
+
+      wrap.innerHTML = recent.map(r => `
+        <div style="background:rgba(255,255,255,.45);border:1px solid rgba(200,180,220,.22);border-radius:12px;padding:.65rem .75rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;">
+            <strong style="font-size:.8rem;line-height:1.3;">${escHtml(r.title)}</strong>
+            <span style="font-size:.67rem;font-weight:700;padding:.15rem .5rem;border-radius:999px;white-space:nowrap;${requestBadge(r.status)}">${requestLabel(r.status)}</span>
+          </div>
+          <div style="margin-top:.32rem;font-size:.72rem;color:var(--text-light);">📅 ${escHtml(r.date)} ${escHtml(r.time || '')}</div>
+        </div>
+      `).join('');
+    }
+
+    window.onload = () => {
+      setLang(currentLang);
+      updatePreview();
+      renderMyEventRequests();
+      applyChatLang(chatLang);
+      setTimeout(() => { if (!chatIsOpen) document.getElementById('chat-badge').style.display = 'block'; }, 2000);
+    };
+
+    function setLang(lang) {
+      currentLang = lang;
+      localStorage.setItem('eventra-lang', lang);
+      document.documentElement.lang = lang === 'ta' ? 'ta' : 'en';
+
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      document.getElementById('btn-ta').classList.toggle('active', lang === 'ta');
+
+      document.querySelectorAll('[data-en]').forEach(el => {
+        const val = el.getAttribute('data-' + lang);
+        if (val !== null) {
+          if (['LABEL','H1','DIV','BUTTON','H4','P','SPAN','A'].includes(el.tagName)) {
+            el.innerHTML = val;
+          } else {
+            el.textContent = val;
+          }
+        }
+      });
+
+      document.querySelectorAll('[data-placeholder-' + lang + ']').forEach(el => {
+        el.placeholder = el.getAttribute('data-placeholder-' + lang);
+      });
+
+      document.querySelectorAll('select option[data-' + lang + ']').forEach(opt => {
+        opt.textContent = opt.getAttribute('data-' + lang);
+      });
+
+      updatePreview();
+      renderMyEventRequests();
+      setChatLang(lang);
+    }
+
+    function updatePreview() {
+      const title = document.getElementById('eventTitle').value ||
+        (currentLang === 'ta' ? 'உங்கள் நிகழ்வு தலைப்பு இங்கே தோன்றும்…' : 'Your event title will appear here…');
+      const cat   = document.getElementById('eventCat').value ||
+        (currentLang === 'ta' ? 'வகை' : 'Category');
+      const date  = document.getElementById('eventDate').value;
+      const time  = document.getElementById('eventTime').value;
+      const price = document.getElementById('tier1Price')?.value;
+
+      document.getElementById('previewTitle').textContent = title;
+      document.getElementById('previewTag').textContent   = cat;
+
+      const banner = document.getElementById('previewBanner');
+      if (!banner.style.backgroundImage) banner.textContent = selectedEmoji;
+
+      document.getElementById('previewDate').textContent = date
+        ? '📅 ' + new Date(date).toLocaleDateString(currentLang === 'ta' ? 'ta-IN' : 'en-IN', {
+            day:'numeric', month:'short', year:'numeric'
+          }) + (time ? ', ' + time : '')
+        : (currentLang === 'ta' ? '📅 தேதி & நேரம்' : '📅 Date & Time');
+
+      document.getElementById('previewVenue').textContent =
+        '📍 ' + (document.getElementById('eventVenue').value ||
+          (currentLang === 'ta' ? 'இடம் / இருப்பிடம்' : 'Venue / Location'));
+
+      document.getElementById('previewPrice').textContent =
+        price && !isNaN(price)
+          ? '₹' + Number(price).toLocaleString('en-IN')
+          : (currentLang === 'ta' ? 'இலவசம்' : 'Free');
+    }
+
+    function updateChar(inputId, countId, max) {
+      const len = document.getElementById(inputId).value.length;
+      document.getElementById(countId).textContent = len + '/' + max;
+    }
+
+    function selectEmoji(el, emoji) {
+      document.querySelectorAll('.emoji-opt').forEach(e => e.style.background = '');
+      el.style.background = 'linear-gradient(135deg,rgba(253,232,240,.6),rgba(232,234,255,.6))';
+      selectedEmoji = emoji;
+      selectedCoverImage = '';
+      const banner = document.getElementById('previewBanner');
+      banner.style.backgroundImage = '';
+      banner.textContent = emoji;
+      updatePreview();
+    }
+
+    const tags = [];
+    function addTag(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const val = e.target.value.trim();
+        if (val && !tags.includes(val)) {
+          tags.push(val);
+          const chip = document.createElement('div');
+          chip.className = 'tag-chip';
+          chip.innerHTML = val + `<button onclick="removeTag(this,'${val}')">✕</button>`;
+          document.getElementById('tagsWrap').insertBefore(chip, e.target);
+        }
+        e.target.value = '';
+      }
+    }
+
+    function removeTag(btn, val) {
+      const index = tags.indexOf(val);
+      if (index > -1) tags.splice(index, 1);
+      btn.parentElement.remove();
+    }
+
+    const tierColors = [
+      'linear-gradient(135deg,#a070d0,#c9b8f0)',
+      'linear-gradient(135deg,#50b8d8,#aaecdc)',
+      'linear-gradient(135deg,#f9c784,#f4a7b9)'
+    ];
+    let tierCount = 1;
+
+    function addTier() {
+      tierCount++;
+      const namePh = currentLang === 'ta' ? 'நிலை பெயர்' : 'Tier name';
+      const qtyPh  = currentLang === 'ta' ? 'எண்ணிக்கை' : 'Qty';
+      const t = document.createElement('div');
+      t.className = 'tier-card';
+      t.innerHTML = `
+        <div class="tier-color" style="background:${tierColors[(tierCount-1)%tierColors.length]};"></div>
+        <div class="tier-fields">
+          <input type="text" placeholder="${namePh}" data-placeholder-en="Tier name" data-placeholder-ta="நிலை பெயர்" style="flex:2;"/>
+          <input type="number" placeholder="Price (₹)" style="flex:1;"/>
+          <input type="number" placeholder="${qtyPh}" data-placeholder-en="Qty" data-placeholder-ta="எண்ணிக்கை" style="flex:1;"/>
+        </div>
+        <button class="tier-remove" onclick="removeTier(this)">✕</button>`;
+      document.getElementById('tierList').appendChild(t);
+    }
+
+    function removeTier(btn) {
+      const tiers = document.querySelectorAll('.tier-card');
+      if (tiers.length > 1) btn.closest('.tier-card').remove();
+    }
+
+    function handleUpload(e) {
+      const preview = document.getElementById('uploadPreview');
+      const files = [...(e.target.files || [])];
+      if (!files.length) return;
+
+      preview.style.display = 'flex';
+      preview.innerHTML = '';
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const img = document.createElement('img');
+          img.src = ev.target.result;
+          img.className = 'preview-img';
+          preview.appendChild(img);
+          selectedCoverImage = String(ev.target.result || '');
+
+          const banner = document.getElementById('previewBanner');
+          banner.style.backgroundImage = `url(${selectedCoverImage})`;
+          banner.style.backgroundSize = 'cover';
+          banner.style.backgroundPosition = 'center';
+          banner.textContent = '';
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function goStep(n, el) {
+      document.querySelectorAll('.step-item').forEach((s,i) => {
+        s.classList.remove('active','done');
+        if (i + 1 < n) s.classList.add('done');
+      });
+      el.classList.add('active');
+      document.getElementById('section' + n).scrollIntoView({ behavior:'smooth' });
+    }
+
+    function showToast(icon, title, msg) {
+      document.getElementById('toastIcon').textContent  = icon;
+      document.getElementById('toastTitle').textContent = title;
+      document.getElementById('toastMsg').textContent   = msg;
+      const t = document.getElementById('toast');
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    function submitEvent() {
+      const title = document.getElementById('eventTitle').value.trim();
+      const date  = document.getElementById('eventDate').value;
+      const time  = document.getElementById('eventTime').value;
+      const venue = document.getElementById('eventVenue').value.trim();
+      const city  = (document.getElementById('eventCity')?.value || '').trim();
+      const category = document.getElementById('eventCat').value || 'Other';
+      const description = (document.getElementById('eventDesc')?.value || '').trim();
+      const price = Number(document.getElementById('tier1Price')?.value || 0);
+      if (!title || !date || !time || !venue) {
+        showToast('⚠️',
+          currentLang === 'ta' ? 'தகவல் இல்லை' : 'Missing Info',
+          currentLang === 'ta' ? 'அனைத்து தேவையான புலங்களையும் நிரப்பவும்.' : 'Please fill all required fields.'
+        );
+        return;
+      }
+
+      const isLoggedIn = localStorage.getItem('loggedIn') === 'true';
+      const organiserEmail = getLoggedInEmail();
+      if (!isLoggedIn || !organiserEmail) {
+        showToast('🔒',
+          currentLang === 'ta' ? 'உள்நுழைவு தேவை' : 'Login Required',
+          currentLang === 'ta' ? 'நிகழ்வு கோரிக்கையை அனுப்ப முதலில் உள்நுழையவும்.' : 'Please login before sending an event request.'
+        );
+        setTimeout(() => { location.href = 'login.html'; }, 1200);
+        return;
+      }
+
+      const request = {
+        id: 'req-' + Date.now(),
+        title,
+        category,
+        date,
+        time,
+        venue,
+        city,
+        description,
+        image: selectedCoverImage || '',
+        price,
+        organiserEmail,
+        organiserName: organiserEmail.split('@')[0],
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+      };
+
+      const requests = getEventRequests();
+      requests.push(request);
+      saveEventRequests(requests);
+      renderMyEventRequests();
+
+      showToast('📨',
+        currentLang === 'ta' ? 'கோரிக்கை அனுப்பப்பட்டது' : 'Request Sent to Admin',
+        currentLang === 'ta'
+          ? 'உங்கள் நிகழ்வு நிர்வாக ஒப்புதலுக்காக அனுப்பப்பட்டது. அங்கீகரிக்கப்பட்டதும் உங்கள் கணக்கில் தோன்றும்.'
+          : 'Your event is now waiting for admin approval. Once approved, it will reflect in your account.'
+      );
+      setTimeout(() => { location.href = 'dashboard.html'; }, 1700);
+    }
+
+    function saveDraft() {
+      showToast('💾',
+        currentLang === 'ta' ? 'வரைவு சேமிக்கப்பட்டது' : 'Draft Saved',
+        currentLang === 'ta' ? 'உங்கள் நிகழ்வு சேமிக்கப்பட்டது.' : 'Your event has been saved.'
+      );
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       CHATBOT — BILINGUAL CONTENT
+    ══════════════════════════════════════════════════════════ */
+    const GROQ_API_KEY = 'YOUR_API_KEY';
+    const GROQ_URL     = 'https://api.groq.com/openai/v1/chat/completions';
+
+    const CHAT_CONTENT = {
+      en: {
+        title:        'Eventra AI Assistant',
+        subtitle:     'Powered by Groq · Voice enabled 🎤',
+        placeholder:  'Ask anything about creating your event… or use 🎤',
+        voiceStatus:  '🎤 Listening… speak now',
+        clearConfirm: 'Clear this conversation?',
+        clearMsg:     "Chat cleared! 🌸 How can I help you?",
+        welcomeMsg:   `Hi there! 👋 I'm **Eventra AI**, your event creation assistant.\n\nI can help you fill in your event details, choose the right category, set ticket pricing, and more. You can also use the 🎤 **voice button** to talk to me!`,
+        chips: ['📋 What info do I need?', '🎟 Ticket pricing tips', '📸 Best image size', '⚙️ Which settings matter?'],
+        speakBtn: '🔊 Speak',
+        stopBtn:  '⏹ Stop',
+        systemPrompt: `You are Eventra AI, a helpful assistant on the Eventra "Add Event" page — a professional event management platform.
+
+You help organisers with:
+- Filling in event details: title, category, description, date, time, venue, city
+- Choosing the right event category (Workshop, Music, Tech, Food, Sports, Art, Business, Wellness)
+- Setting ticket tiers and pricing in INR (₹)
+- Uploading cover images (PNG/JPG/WEBP, max 5MB, recommended 1200×630px)
+- Adding tags for better discoverability
+- Event settings: public/private, approval, email reminders, QR check-in, Q&A
+- Cancellation policies
+- Best practices for a successful event listing
+
+Keep responses concise, warm, and actionable. Use emojis sparingly. Always reply in English.`,
+        voiceLang: 'en-IN',
+      },
+      ta: {
+        title:        'Eventra AI உதவியாளர்',
+        subtitle:     'Groq மூலம் இயக்கப்படுகிறது · குரல் இயக்கப்பட்டது 🎤',
+        placeholder:  'நிகழ்வை உருவாக்குவது பற்றி கேளுங்கள்… அல்லது 🎤 பயன்படுத்துங்கள்',
+        voiceStatus:  '🎤 கேட்கிறேன்… தமிழில் பேசுங்கள்',
+        clearConfirm: 'இந்த உரையாடலை அழிக்கவா?',
+        clearMsg:     "அரட்டை அழிக்கப்பட்டது! 🌸 நான் எப்படி உதவலாம்?",
+        welcomeMsg:   `வணக்கம்! 👋 நான் **Eventra AI**, உங்கள் நிகழ்வு உருவாக்கும் உதவியாளர்.\n\nநிகழ்வு விவரங்களை நிரப்ப, சரியான வகையை தேர்வு செய்ய, டிக்கெட் கட்டணம் அமைக்க உதவுவேன். 🎤 **குரல் பொத்தானையும்** பயன்படுத்தலாம்!`,
+        chips: ['📋 என்ன தகவல் தேவை?', '🎟 டிக்கெட் விலை குறிப்புகள்', '📸 சிறந்த படத்தின் அளவு', '⚙️ முக்கியமான அமைப்புகள்'],
+        speakBtn: '🔊 கேளுங்கள்',
+        stopBtn:  '⏹ நிறுத்து',
+        systemPrompt: `நீங்கள் Eventra AI — Eventra "நிகழ்வு சேர்" பக்கத்தில் உள்ள ஒரு நட்பான தமிழ் உதவியாளர்.
+
+நீங்கள் ஏற்பாட்டாளர்களுக்கு உதவுவது:
+- நிகழ்வு விவரங்களை நிரப்புவது: தலைப்பு, வகை, விளக்கம், தேதி, நேரம், இடம், நகரம்
+- சரியான நிகழ்வு வகையை தேர்வு செய்வது (பட்டறை, இசை, தொழில்நுட்பம், உணவு, விளையாட்டு, கலை, வணிகம், ஆரோக்கியம்)
+- டிக்கெட் நிலைகள் மற்றும் ₹ கட்டணம் அமைப்பது
+- அட்டை படங்களை பதிவேற்றுவது (PNG/JPG/WEBP, அதிகபட்சம் 5MB, பரிந்துரை 1200×630px)
+- குறிச்சொற்கள் சேர்ப்பது
+- நிகழ்வு அமைப்புகள்: பொது/தனிப்பட்ட, ஒப்புதல், மின்னஞ்சல் நினைவூட்டல், QR சரிபார்ப்பு, கேள்வி-பதில்
+- ரத்து கொள்கைகள்
+
+எப்போதும் தமிழில் பதிலளிக்கவும். பதில்கள் சுருக்கமாக, அன்பாக மற்றும் உதவியாக இருக்கட்டும்.`,
+        voiceLang: 'ta-IN',
+      }
+    };
+
+    /* ── Chat state ── */
+    let chatLang    = localStorage.getItem('eventra-chat-lang') || localStorage.getItem('eventra-lang') || 'en';
+    let chatHistory = [];
+    let chatIsOpen  = false;
+    let chatTyping  = false;
+
+    function applyChatLang(lang) {
+      const c = CHAT_CONTENT[lang];
+      document.getElementById('chat-title-text').textContent    = c.title;
+      document.getElementById('chat-subtitle-text').textContent  = c.subtitle;
+      document.getElementById('chat-btn-en').classList.toggle('active', lang === 'en');
+      document.getElementById('chat-btn-ta').classList.toggle('active', lang === 'ta');
+      document.getElementById('chat-input').placeholder         = c.placeholder;
+      document.getElementById('voice-status').textContent       = c.voiceStatus;
+
+      const chipsRow = document.getElementById('chips-row');
+      chipsRow.innerHTML = c.chips.map(chip =>
+        `<button class="chip" onclick="sendChip(this)">${chip}</button>`
+      ).join('');
+    }
+
+    function setChatLang(lang) {
+      chatLang = lang;
+      localStorage.setItem('eventra-chat-lang', lang);
+      applyChatLang(lang);
+    }
+
+    function toggleChat() {
+      chatIsOpen = !chatIsOpen;
+      document.getElementById('chat-window').classList.toggle('open', chatIsOpen);
+      document.getElementById('chat-fab').classList.toggle('open', chatIsOpen);
+      document.getElementById('chat-fab').textContent = chatIsOpen ? '✕' : '✨';
+      document.getElementById('chat-badge').style.display = 'none';
+      if (chatIsOpen && chatHistory.length === 0) {
+        appendBotMsg(CHAT_CONTENT[chatLang].welcomeMsg);
+      }
+      if (chatIsOpen) setTimeout(() => document.getElementById('chat-input').focus(), 300);
+    }
+
+    function sendChip(btn) {
+      const text = btn.textContent.replace(/^\S+\s/, '').trim();
+      document.getElementById('chat-input').value = text;
+      document.getElementById('chips-row').style.display = 'none';
+      sendMessage();
+    }
+
+    function autoChatResize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+    }
+
+    function handleChatKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('chat-input');
+      const text  = input.value.trim();
+      if (!text || chatTyping) return;
+      input.value = ''; input.style.height = 'auto';
+      document.getElementById('chat-send-btn').disabled = true;
+      appendUserMsg(text);
+      chatHistory.push({ role: 'user', content: text });
+      showTypingDots();
+      chatTyping = true;
+      try {
+        const reply = await callGroq();
+        hideTypingDots();
+        appendBotMsg(reply);
+        chatHistory.push({ role: 'assistant', content: reply });
+      } catch (err) {
+        hideTypingDots();
+        appendChatError('⚠️ ' + (err.message || 'Something went wrong. Please try again.'));
+      } finally {
+        chatTyping = false;
+        document.getElementById('chat-send-btn').disabled = false;
+        document.getElementById('chat-input').focus();
+      }
+    }
+
+    async function callGroq() {
+      const messages = [{ role: 'system', content: CHAT_CONTENT[chatLang].systemPrompt }, ...chatHistory];
+      const res = await fetch(GROQ_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY}` },
+        body: JSON.stringify({ model: 'llama-3.1-8b-instant', messages, max_tokens: 600, temperature: 0.75 })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `HTTP ${res.status}`);
+      }
+      const data  = await res.json();
+      const reply = data?.choices?.[0]?.message?.content;
+      if (!reply) throw new Error('No response received. Please try again.');
+      return reply;
+    }
+
+    function appendUserMsg(text) {
+      const email   = localStorage.getItem('email') || '';
+      const rawName = email.includes('@') ? email.split('@')[0] : (email || 'U');
+      const initial = rawName.charAt(0).toUpperCase();
+      document.getElementById('chat-messages').innerHTML += `
+        <div class="msg-row user">
+          <div class="msg-av user">${initial}</div>
+          <div>
+            <div class="msg-bubble user">${escChat(text)}</div>
+            <div class="msg-time">${chatNow()}</div>
+          </div>
+        </div>`;
+      chatScroll();
+    }
+
+    function appendBotMsg(text) {
+      const speakLabel = CHAT_CONTENT[chatLang].speakBtn;
+      document.getElementById('chat-messages').innerHTML += `
+        <div class="msg-row">
+          <div class="msg-av bot">✨</div>
+          <div>
+            <div class="msg-bubble bot">${fmtChat(text)}</div>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <div class="msg-time">Eventra AI · ${chatNow()}</div>
+              <button class="speak-btn" onclick="speakText(this,'${escAttr(text)}')" title="Read aloud">${speakLabel}</button>
+            </div>
+          </div>
+        </div>`;
+      chatScroll();
+      if (!chatIsOpen) document.getElementById('chat-badge').style.display = 'block';
+    }
+
+    function appendChatError(msg) {
+      document.getElementById('chat-messages').innerHTML += `<div class="msg-error">${escChat(msg)}</div>`;
+      chatScroll();
+    }
+
+    function showTypingDots() {
+      document.getElementById('chat-messages').innerHTML += `
+        <div class="msg-row" id="typing-row">
+          <div class="msg-av bot">✨</div>
+          <div class="typing-indicator">
+            <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+          </div>
+        </div>`;
+      chatScroll();
+    }
+
+    function hideTypingDots() { document.getElementById('typing-row')?.remove(); }
+
+    function clearChat() {
+      if (!confirm(CHAT_CONTENT[chatLang].clearConfirm)) return;
+      stopSpeaking();
+      chatHistory = [];
+      document.getElementById('chat-messages').innerHTML = '';
+      document.getElementById('chips-row').style.display = 'flex';
+      appendBotMsg(CHAT_CONTENT[chatLang].clearMsg);
+    }
+
+    function chatScroll() {
+      const m = document.getElementById('chat-messages');
+      setTimeout(() => m.scrollTop = m.scrollHeight, 50);
+    }
+
+    function escChat(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+    }
+    function escAttr(str) { return str.replace(/'/g,"\\'").replace(/\n/g,' ').replace(/"/g,'&quot;'); }
+    function fmtChat(str) {
+      return str
+        .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g,'<em>$1</em>')
+        .replace(/`(.*?)`/g,'<code style="background:rgba(160,80,180,.1);border-radius:4px;padding:.1em .3em;font-size:.82em;">$1</code>')
+        .replace(/\n/g,'<br>');
+    }
+    function chatNow() { return new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }); }
+
+    /* ══════════════════════════════════════════════════════════
+       🎤 VOICE INPUT — language-aware
+    ══════════════════════════════════════════════════════════ */
+    let recognition = null;
+    let isListening = false;
+
+    function initRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) return null;
+      const rec          = new SpeechRecognition();
+      rec.lang           = CHAT_CONTENT[chatLang].voiceLang;
+      rec.continuous     = false;
+      rec.interimResults = true;
+
+      rec.onstart = () => {
+        isListening = true;
+        document.getElementById('voice-btn').classList.add('listening');
+        document.getElementById('voice-btn').textContent = '🔴';
+        document.getElementById('voice-status').style.display = 'block';
+        document.getElementById('chat-input').placeholder =
+          chatLang === 'ta' ? 'கேட்கிறேன்…' : 'Listening…';
+      };
+
+      rec.onresult = (e) => {
+        const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
+        document.getElementById('chat-input').value = transcript;
+        autoChatResize(document.getElementById('chat-input'));
+        if (e.results[e.results.length - 1].isFinal) {
+          stopListening();
+          setTimeout(() => sendMessage(), 400);
+        }
+      };
+
+      rec.onerror = (e) => {
+        stopListening();
+        if (e.error === 'not-allowed') {
+          appendChatError(chatLang === 'ta'
+            ? '⚠️ மைக்ரோஃபோன் அணுகல் மறுக்கப்பட்டது. அனுமதி தரவும்.'
+            : '⚠️ Microphone access denied. Please allow microphone in browser settings.');
+        } else if (e.error !== 'no-speech') {
+          appendChatError('⚠️ Voice error: ' + e.error);
+        }
+      };
+
+      rec.onend = () => { stopListening(); };
+      return rec;
+    }
+
+    function toggleVoice() {
+      if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+        appendChatError(chatLang === 'ta'
+          ? '⚠️ இந்த உலாவியில் குரல் உள்ளீடு ஆதரிக்கப்படவில்லை. Chrome பயன்படுத்தவும்.'
+          : '⚠️ Voice input is not supported in this browser. Try Chrome.');
+        return;
+      }
+      isListening ? stopListening() : startListening();
+    }
+
+    function startListening() {
+      recognition = initRecognition();
+      if (!recognition) return;
+      try { recognition.start(); } catch(e) { console.warn(e); }
+    }
+
+    function stopListening() {
+      isListening = false;
+      document.getElementById('voice-btn').classList.remove('listening');
+      document.getElementById('voice-btn').textContent = '🎤';
+      document.getElementById('voice-status').style.display = 'none';
+      document.getElementById('chat-input').placeholder = CHAT_CONTENT[chatLang].placeholder;
+      if (recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       🔊 VOICE OUTPUT — language-aware TTS
+    ══════════════════════════════════════════════════════════ */
+    let currentUtterance = null;
+
+    function speakText(btn, text) {
+      if (!window.speechSynthesis) {
+        appendChatError('⚠️ Text-to-speech not supported in this browser.');
+        return;
+      }
+      if (window.speechSynthesis.speaking) {
+        stopSpeaking();
+        document.querySelectorAll('.speak-btn').forEach(b => {
+          b.classList.remove('speaking');
+          b.textContent = CHAT_CONTENT[chatLang].speakBtn;
+        });
+        return;
+      }
+      const clean = text
+        .replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1')
+        .replace(/`(.*?)`/g,'$1').replace(/<br>/g,' ')
+        .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
+
+      currentUtterance        = new SpeechSynthesisUtterance(clean);
+      currentUtterance.lang   = CHAT_CONTENT[chatLang].voiceLang;
+      currentUtterance.rate   = chatLang === 'ta' ? 0.88 : 0.95;
+      currentUtterance.pitch  = 1.05;
+      currentUtterance.volume = 1;
+
+      const voices    = window.speechSynthesis.getVoices();
+      const preferred = chatLang === 'ta'
+        ? voices.find(v => v.lang === 'ta-IN' || v.lang.startsWith('ta'))
+            || voices.find(v => v.lang.startsWith('en')) || voices[0]
+        : voices.find(v => v.lang === 'en-IN')
+            || voices.find(v => v.lang.startsWith('en')) || voices[0];
+
+      if (preferred) currentUtterance.voice = preferred;
+
+      btn.classList.add('speaking');
+      btn.textContent = CHAT_CONTENT[chatLang].stopBtn;
+
+      currentUtterance.onend = () => {
+        btn.classList.remove('speaking');
+        btn.textContent = CHAT_CONTENT[chatLang].speakBtn;
+        currentUtterance = null;
+      };
+      currentUtterance.onerror = () => {
+        btn.classList.remove('speaking');
+        btn.textContent = CHAT_CONTENT[chatLang].speakBtn;
+        currentUtterance = null;
+      };
+      window.speechSynthesis.speak(currentUtterance);
+    }
+
+    function stopSpeaking() {
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      currentUtterance = null;
+    }
+
+    // Pre-load voices
+    window.speechSynthesis?.getVoices();
+    window.speechSynthesis?.addEventListener('voiceschanged', () => window.speechSynthesis.getVoices());
+  </script>
+</body>
+</html>

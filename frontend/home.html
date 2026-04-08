@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Eventra – Smart Event Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --rose:      #f4a7b9;
+      --peach:     #f9c784;
+      --lavender:  #c9b8f0;
+      --sky:       #a8d8f0;
+      --mint:      #aaecdc;
+      --cream:     #fff8f0;
+      --glass-bg:  rgba(255,255,255,0.55);
+      --glass-border: rgba(255,255,255,0.75);
+      --shadow:    0 8px 40px rgba(180,120,140,0.18);
+      --text-dark: #3a2a3e;
+      --text-mid:  #7a6080;
+      --text-light:#b8a8c0;
+      --radius:    20px;
+      --nav-h:     70px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: linear-gradient(135deg, #fde8f0 0%, #fef3e2 30%, #e8eaff 65%, #e0f7f4 100%);
+      min-height: 100vh; color: var(--text-dark); overflow-x: hidden;
+    }
+
+    .blob { position: fixed; border-radius: 50%; filter: blur(80px); opacity: .45; pointer-events: none; z-index: 0; }
+    .blob-1 { width:480px; height:480px; background: var(--rose);    top:-120px; left:-120px; }
+    .blob-2 { width:380px; height:380px; background: var(--lavender); top:40%;   right:-100px; }
+    .blob-3 { width:300px; height:300px; background: var(--mint);     bottom:-80px; left:30%; }
+
+    nav {
+      position: fixed; top:0; left:0; right:0; z-index: 100;
+      height: var(--nav-h);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 5%;
+      background: rgba(255,248,245,0.72);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--glass-border);
+      box-shadow: 0 2px 24px rgba(200,140,160,0.10);
+    }
+    .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 900; background: linear-gradient(135deg, #e07090, #a070d0, #50b8d8); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a { text-decoration: none; font-size: .95rem; font-weight: 500; color: var(--text-mid); transition: color .25s; position: relative; }
+    .nav-links a::after { content:''; position:absolute; bottom:-3px; left:0; right:0; height:2px; border-radius:2px; background: linear-gradient(90deg,var(--rose),var(--lavender)); transform: scaleX(0); transition: transform .25s; }
+    .nav-links a:hover { color: var(--text-dark); }
+    .nav-links a:hover::after { transform: scaleX(1); }
+
+    .btn { display: inline-flex; align-items: center; gap:.5rem; padding: .72rem 1.6rem; border: none; cursor: pointer; border-radius: 50px; font-family: 'DM Sans', sans-serif; font-size: .93rem; font-weight: 600; transition: transform .2s, box-shadow .2s, filter .2s; text-decoration: none; }
+    .btn:hover { transform: translateY(-2px); filter: brightness(1.06); }
+    .btn-primary { background: linear-gradient(135deg, #e07090, #a070d0); color: #fff; box-shadow: 0 6px 28px rgba(160,80,180,.35); }
+    .btn-ghost { background: var(--glass-bg); backdrop-filter: blur(10px); border: 1.5px solid var(--glass-border); color: var(--text-dark); }
+
+    .hero {
+      position: relative; z-index: 1; overflow: hidden;
+      padding-top: calc(var(--nav-h) + 3rem);
+      min-height: calc(100vh - var(--nav-h));
+      display: flex; align-items: center; gap: 3rem;
+    }
+    .hero-slide { position: absolute; inset: 0; background-size: cover; background-position: center; background-repeat: no-repeat; transition: transform 1s ease-in-out; }
+    .hero-slide.current { transform: translateX(0); z-index: 2; }
+    .hero-slide.next { transform: translateX(100%); z-index: 1; }
+    .hero-slide.exit { transform: translateX(-100%); z-index: 1; }
+    .overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.25); backdrop-filter: blur(2px); pointer-events: none; z-index: 0; }
+    .hero-copy { position: relative; z-index: 2; display: flex; flex-direction: column; gap: 15px; max-width: 450px; }
+    .hero-glass { width: 380px; padding: 1.5rem; border-radius: 20px; background: rgba(255,255,255,0.35); backdrop-filter: blur(18px); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); }
+    .hero-badge { display: inline-flex; align-items: center; gap:.5rem; background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 50px; padding: .4rem 1rem; font-size: .82rem; font-weight: 600; color: var(--text-mid); margin-bottom: 1.4rem; animation: fadeUp .7s ease both; }
+    .hero-badge span { width:8px; height:8px; border-radius:50%; background:var(--rose); display:block; }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; line-height: 1.2; color: var(--text-dark); animation: fadeUp .7s .1s ease both; }
+    .hero h1 .accent { background: linear-gradient(135deg, #5a4619, #5d489c, #812261); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-sub { font-size: 0.95rem; line-height: 1.6; margin: 1rem 0 1.5rem; }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; animation: fadeUp .7s .3s ease both; }
+
+    .stats { position: relative; z-index:1; display: flex; gap: 1.5rem; flex-wrap: wrap; padding: 0 5% 5rem; justify-content: center; }
+    .stat-card { background: var(--glass-bg); backdrop-filter: blur(16px); border: 1.5px solid var(--glass-border); border-radius: var(--radius); padding: 1.6rem 2.2rem; text-align: center; box-shadow: var(--shadow); min-width: 160px; transition: transform .3s; }
+    .stat-card:hover { transform: translateY(-4px); }
+    .stat-num { font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:900; background: linear-gradient(135deg, #e07090, #a070d0); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+    .stat-label { font-size:.83rem; color:var(--text-light); margin-top:.3rem; }
+
+    section { position: relative; z-index:1; padding: 5rem 5%; }
+    .section-tag { display: inline-flex; align-items:center; gap:.4rem; font-size:.82rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color: var(--text-mid); margin-bottom:.8rem; }
+    .section-tag::before { content:''; display:block; width:20px; height:2px; border-radius:2px; background:linear-gradient(90deg,var(--rose),var(--lavender)); }
+    .section-title { font-family:'Playfair Display',serif; font-size: clamp(1.8rem,3.5vw,2.8rem); font-weight:900; line-height:1.2; color:var(--text-dark); max-width:560px; }
+
+    .events-preview-header { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:2.5rem; flex-wrap:wrap; gap:1rem; }
+    .events-row { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1.5rem; }
+    .event-card { background: var(--glass-bg); backdrop-filter: blur(16px); border: 1.5px solid var(--glass-border); border-radius: var(--radius); overflow:hidden; box-shadow: var(--shadow); transition: transform .3s, box-shadow .3s; cursor:pointer; text-decoration:none; color:inherit; display:block; }
+    .event-card:hover { transform: translateY(-6px); box-shadow: 0 16px 48px rgba(160,100,180,.22); }
+    .ec-img { height:150px; display:flex; align-items:center; justify-content:center; font-size:2.8rem; }
+    .ec-img-1{background:linear-gradient(135deg,#fde8f0,#f9c8e8);}
+    .ec-img-2{background:linear-gradient(135deg,#ede8ff,#c8d8f8);}
+    .ec-img-3{background:linear-gradient(135deg,#e0fff8,#c0ecf0);}
+    .ec-body { padding:1.4rem; }
+    .ec-tag { display:inline-block; padding:.25rem .7rem; border-radius:50px; font-size:.75rem; font-weight:600; background:linear-gradient(135deg,#fde8f0,#e8eaff); color:#a070d0; margin-bottom:.6rem; }
+    .ec-title { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; margin-bottom:.5rem; }
+    .ec-meta { font-size:.8rem; color:var(--text-light); display:flex; gap:.8rem; }
+    .ec-footer { display:flex; align-items:center; justify-content:space-between; margin-top:1rem; padding-top:.9rem; border-top:1px solid rgba(200,180,220,.25); }
+    .ec-spots { font-size:.8rem; color:var(--text-mid); font-weight:500; }
+    .ec-btn { font-size:.8rem; font-weight:600; color:#e07090; background:none; border:none; cursor:pointer; transition:color .2s; }
+    .ec-btn:hover { color:#a070d0; }
+
+    .how-steps { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem; margin-top:3rem; position:relative; }
+    .how-steps::before { content:''; position:absolute; top:36px; left:10%; right:10%; height:2px; background:linear-gradient(90deg,var(--rose),var(--lavender),var(--sky)); border-radius:2px; opacity:.4; }
+    .step-card { background:var(--glass-bg); backdrop-filter:blur(16px); border:1.5px solid var(--glass-border); border-radius:var(--radius); padding:2rem 1.5rem; text-align:center; box-shadow:var(--shadow); transition:transform .3s; }
+    .step-card:hover { transform:translateY(-5px); }
+    .step-num { width:50px; height:50px; border-radius:50%; background:linear-gradient(135deg,var(--rose),var(--lavender)); color:#fff; font-weight:800; font-size:1.1rem; display:flex; align-items:center; justify-content:center; margin:0 auto 1.1rem; }
+    .step-card h3 { font-size:.98rem; font-weight:700; margin-bottom:.5rem; }
+    .step-card p  { font-size:.86rem; color:var(--text-mid); line-height:1.6; }
+
+    .testi-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:1.5rem; margin-top:3rem; }
+    .testi-card { background:var(--glass-bg); backdrop-filter:blur(16px); border:1.5px solid var(--glass-border); border-radius:var(--radius); padding:2rem; box-shadow:var(--shadow); }
+    .testi-stars { color:var(--peach); font-size:1rem; margin-bottom:.9rem; }
+    .testi-text { font-size:.92rem; color:var(--text-mid); line-height:1.7; font-style:italic; }
+    .testi-author { display:flex; align-items:center; gap:.8rem; margin-top:1.2rem; }
+    .testi-av { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:700; }
+    .tav1{background:linear-gradient(135deg,var(--rose),var(--peach)); color:#fff;}
+    .tav2{background:linear-gradient(135deg,var(--lavender),var(--sky)); color:#fff;}
+    .tav3{background:linear-gradient(135deg,var(--mint),var(--sky)); color:#fff;}
+    .testi-name { font-weight:600; font-size:.88rem; }
+    .testi-role { font-size:.78rem; color:var(--text-light); }
+
+    .cta-banner { margin:0 5% 5rem; background:linear-gradient(135deg,rgba(224,112,144,.18),rgba(160,112,208,.18),rgba(80,184,216,.18)); backdrop-filter:blur(20px); border:1.5px solid var(--glass-border); border-radius:28px; padding:3.5rem 4%; text-align:center; box-shadow:var(--shadow); position:relative; overflow:hidden; z-index:1; }
+    .cta-banner::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.5),transparent 70%); }
+    .cta-banner h2 { font-family:'Playfair Display',serif; font-size:clamp(1.8rem,3vw,2.6rem); font-weight:900; margin-bottom:.9rem; position:relative; }
+    .cta-banner p { font-size:1rem; color:var(--text-mid); margin-bottom:1.8rem; position:relative; }
+    .cta-banner .btn { position:relative; }
+
+    footer { position:relative; z-index:1; background:rgba(255,248,245,.72); backdrop-filter:blur(16px); border-top:1px solid var(--glass-border); padding:3rem 5% 1.5rem; display:flex; flex-wrap:wrap; gap:2rem; justify-content:space-between; align-items:flex-start; }
+    .footer-brand .nav-logo { font-size:1.4rem; }
+    .footer-brand p { font-size:.85rem; color:var(--text-light); margin-top:.5rem; max-width:220px; }
+    .footer-links h4 { font-size:.88rem; font-weight:700; margin-bottom:.8rem; }
+    .footer-links a { display:block; font-size:.83rem; color:var(--text-mid); text-decoration:none; margin-bottom:.4rem; transition:color .2s; }
+    .footer-links a:hover { color:var(--text-dark); }
+    .footer-bottom { width:100%; border-top:1px solid rgba(200,180,220,.25); padding-top:1rem; margin-top:1rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.5rem; }
+    .footer-bottom p { font-size:.78rem; color:var(--text-light); }
+
+    @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+    .reveal { opacity:0; transform:translateY(28px); transition: opacity .65s ease, transform .65s ease; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+
+    .lang-toggle { display: flex; align-items: center; gap: 0; background: rgba(255,255,255,0.45); backdrop-filter: blur(12px); border: 1.5px solid var(--glass-border); border-radius: 50px; padding: 3px; box-shadow: 0 2px 12px rgba(160,100,180,.12); }
+    .lang-btn { padding: .38rem .9rem; border: none; border-radius: 50px; font-family: 'DM Sans', sans-serif; font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .25s ease; background: transparent; color: var(--text-mid); line-height: 1; }
+    .lang-btn.active { background: linear-gradient(135deg, #e07090, #a070d0); color: #fff; box-shadow: 0 3px 10px rgba(160,80,180,.3); }
+    .lang-btn:not(.active):hover { color: var(--text-dark); background: rgba(255,255,255,0.5); }
+    html[lang="ta"] body { font-family: 'DM Sans', 'Noto Sans Tamil', sans-serif; font-size: 0.97em; line-height: 1.6; }
+
+    /* 🔥 Smaller h1 font when Tamil is active — fixes overflow in hero glass box */
+    html[lang="ta"] .hero h1 { font-size: clamp(1.2rem, 2.5vw, 1.8rem); line-height: 1.35; }
+
+    @media(max-width:768px) {
+      .hero { flex-direction:column; text-align:center; }
+      .hero-actions { justify-content:center; }
+      .how-steps::before { display:none; }
+      .events-preview-header { flex-direction:column; align-items:flex-start; }
+      footer { flex-direction:column; }
+    }
+
+    /* ===== CHATBOT STYLES ===== */
+    #chat-fab {
+      position:fixed; bottom:28px; right:28px; z-index:9999;
+      width:60px; height:60px; border-radius:50%;
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      border:none; cursor:pointer; box-shadow:0 8px 32px rgba(160,80,180,.4);
+      display:flex; align-items:center; justify-content:center; font-size:1.5rem;
+      transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s;
+      animation:fab-pulse 3s ease-in-out infinite;
+    }
+    #chat-fab:hover { transform:scale(1.12); box-shadow:0 12px 40px rgba(160,80,180,.55); }
+    #chat-fab.open  { animation:none; transform:rotate(45deg) scale(1); }
+    @keyframes fab-pulse { 0%,100%{box-shadow:0 8px 32px rgba(160,80,180,.4);}50%{box-shadow:0 8px 44px rgba(160,80,180,.7);} }
+    #chat-badge { position:fixed; bottom:96px; right:28px; z-index:10000; background:#e07090; color:#fff; font-size:.68rem; font-weight:800; padding:.15rem .55rem; border-radius:50px; border:2px solid #fff8f5; display:none; animation:badge-pop .3s cubic-bezier(.34,1.56,.64,1); }
+    @keyframes badge-pop{from{transform:scale(0);}to{transform:scale(1);}}
+    #chat-window {
+      position:fixed; bottom:100px; right:28px; z-index:9998;
+      width:380px; max-width:calc(100vw - 40px); height:560px; max-height:calc(100vh - 140px);
+      background:rgba(255,248,250,.95); backdrop-filter:blur(24px);
+      border:1.5px solid var(--glass-border); border-radius:24px;
+      box-shadow:0 20px 60px rgba(160,80,180,.22), 0 4px 16px rgba(0,0,0,.06);
+      display:flex; flex-direction:column; overflow:hidden;
+      transform:scale(.85) translateY(20px); opacity:0; pointer-events:none;
+      transition:transform .3s cubic-bezier(.34,1.56,.64,1), opacity .25s ease;
+    }
+    #chat-window.open { transform:scale(1) translateY(0); opacity:1; pointer-events:all; }
+    .chat-header { background:linear-gradient(135deg,#e07090,#a070d0); padding:1rem 1.2rem; display:flex; align-items:center; gap:.85rem; flex-shrink:0; }
+    .chat-av-wrap { position:relative; }
+    .chat-av { width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,.25); border:2px solid rgba(255,255,255,.5); display:flex; align-items:center; justify-content:center; font-size:1.2rem; }
+    .chat-av-wrap::after { content:''; position:absolute; bottom:1px; right:1px; width:10px; height:10px; border-radius:50%; background:#5df0b0; border:2px solid #a070d0; }
+    .chat-header-info { flex:1; }
+    .chat-title { font-size:.95rem; font-weight:800; color:#fff; }
+    .chat-subtitle { font-size:.72rem; color:rgba(255,255,255,.8); margin-top:.1rem; }
+
+    /* ── Language pill inside chat header ── */
+    .chat-lang-pill {
+      display:flex; gap:3px; background:rgba(255,255,255,.2);
+      border-radius:50px; padding:3px;
+    }
+    .chat-lang-pill button {
+      padding:.22rem .65rem; border:none; border-radius:50px;
+      font-size:.7rem; font-weight:700; cursor:pointer;
+      background:transparent; color:rgba(255,255,255,.8);
+      transition:all .2s;
+    }
+    .chat-lang-pill button.active {
+      background:rgba(255,255,255,.35); color:#fff;
+    }
+
+    .chat-close { background:rgba(255,255,255,.2); border:none; cursor:pointer; width:30px; height:30px; border-radius:50%; color:#fff; font-size:.9rem; display:flex; align-items:center; justify-content:center; transition:background .2s; }
+    .chat-close:hover { background:rgba(255,255,255,.35); }
+    #voice-status { display:none; padding:.4rem 1rem; font-size:.75rem; font-weight:600; color:#a070d0; background:rgba(201,184,240,.15); border-top:1px solid rgba(201,184,240,.2); text-align:center; flex-shrink:0; animation:fadeUp .3s ease; }
+    #chat-messages { flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:.75rem; scroll-behavior:smooth; }
+    #chat-messages::-webkit-scrollbar { width:4px; }
+    #chat-messages::-webkit-scrollbar-thumb { background:rgba(160,80,180,.2); border-radius:4px; }
+    .msg-row { display:flex; gap:.6rem; align-items:flex-end; animation:msg-in .3s cubic-bezier(.34,1.56,.64,1); }
+    @keyframes msg-in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+    .msg-row.user { flex-direction:row-reverse; }
+    .msg-av { width:28px; height:28px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:800; color:#fff; }
+    .msg-av.bot  { background:linear-gradient(135deg,#e07090,#a070d0); }
+    .msg-av.user { background:linear-gradient(135deg,var(--lavender),var(--sky)); }
+    .msg-bubble { max-width:78%; padding:.7rem .95rem; border-radius:18px; font-size:.85rem; line-height:1.55; word-break:break-word; }
+    .msg-bubble.bot  { background:var(--glass-bg); border:1.5px solid var(--glass-border); color:var(--text-dark); border-bottom-left-radius:5px; }
+    .msg-bubble.user { background:linear-gradient(135deg,#e07090,#a070d0); color:#fff; border-bottom-right-radius:5px; }
+    .msg-time { font-size:.62rem; color:var(--text-light); margin-top:.3rem; text-align:right; }
+    .typing-indicator { display:flex; gap:4px; align-items:center; padding:.6rem .9rem; background:var(--glass-bg); border:1.5px solid var(--glass-border); border-radius:18px; border-bottom-left-radius:5px; width:fit-content; }
+    .typing-dot { width:7px; height:7px; border-radius:50%; background:var(--lavender); animation:typing-bounce 1.3s ease-in-out infinite; }
+    .typing-dot:nth-child(2){animation-delay:.2s;}
+    .typing-dot:nth-child(3){animation-delay:.4s;}
+    @keyframes typing-bounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);background:#a070d0;}}
+    .chips-row { padding:.5rem 1rem .2rem; display:flex; gap:.5rem; flex-wrap:wrap; flex-shrink:0; }
+    .chip { font-size:.74rem; font-weight:600; color:#a070d0; background:rgba(201,184,240,.18); border:1.5px solid rgba(201,184,240,.4); border-radius:50px; padding:.3rem .8rem; cursor:pointer; transition:background .2s, transform .15s; white-space:nowrap; }
+    .chip:hover { background:rgba(201,184,240,.35); transform:translateY(-1px); }
+    .chat-input-wrap { padding:.85rem 1rem; border-top:1px solid rgba(200,180,220,.18); display:flex; gap:.5rem; align-items:flex-end; background:rgba(255,255,255,.5); flex-shrink:0; }
+    #chat-input { flex:1; border:1.5px solid rgba(200,180,220,.4); border-radius:14px; padding:.6rem .9rem; font-family:'DM Sans',sans-serif; font-size:.85rem; color:var(--text-dark); background:rgba(255,255,255,.7); resize:none; outline:none; max-height:100px; overflow-y:auto; line-height:1.5; transition:border-color .2s; }
+    #chat-input:focus { border-color:#a070d0; }
+    #chat-input::placeholder { color:var(--text-light); }
+    #voice-btn { width:38px; height:38px; border-radius:50%; border:none; flex-shrink:0; background:rgba(201,184,240,.25); color:#a070d0; font-size:1rem; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .2s; }
+    #voice-btn:hover { background:rgba(201,184,240,.45); transform:scale(1.08); }
+    #voice-btn.listening { background:linear-gradient(135deg,#e07090,#a070d0); color:#fff; animation:mic-pulse 1s ease-in-out infinite; }
+    @keyframes mic-pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,112,144,.5);}50%{box-shadow:0 0 0 8px rgba(224,112,144,0);}}
+    .speak-btn { background:none; border:none; cursor:pointer; font-size:.75rem; color:var(--text-light); padding:.1rem .3rem; margin-top:.2rem; transition:color .2s; display:inline-flex; align-items:center; gap:.2rem; }
+    .speak-btn:hover { color:#a070d0; }
+    .speak-btn.speaking { color:#e07090; }
+    #chat-send-btn { width:38px; height:38px; border-radius:12px; border:none; background:linear-gradient(135deg,#e07090,#a070d0); color:#fff; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform .2s, opacity .2s; flex-shrink:0; }
+    #chat-send-btn:hover { transform:scale(1.08); }
+    #chat-send-btn:disabled { opacity:.45; transform:none; cursor:default; }
+    #chat-clear-btn { background:none; border:none; cursor:pointer; font-size:.72rem; color:var(--text-light); padding:0 .2rem; transition:color .2s; flex-shrink:0; }
+    #chat-clear-btn:hover { color:#e07090; }
+    .msg-error { font-size:.78rem; color:#e07090; background:#fde8f0; border:1.5px solid #f4a7b9; border-radius:12px; padding:.5rem .9rem; display:flex; align-items:center; gap:.4rem; }
+    @media(max-width:480px) { #chat-window{right:12px;width:calc(100vw - 24px);bottom:90px;} #chat-fab{right:16px;bottom:20px;} #chat-badge{right:16px;} }
+  </style>
+</head>
+<body>
+
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <nav>
+    <div class="nav-logo">Eventra</div>
+    <ul class="nav-links">
+      <li><a href="home.html" data-en="Home" data-ta="முகப்பு">Home</a></li>
+      <li><a href="login.html" data-en="Events" data-ta="நிகழ்வுகள்">Events</a></li>
+      <li><a href="login.html" data-en="Add Event" data-ta="நிகழ்வு சேர்">Add Event</a></li>
+      <li><a href="login.html" data-en="Dashboard" data-ta="டாஷ்போர்டு">Dashboard</a></li>
+    </ul>
+    <div style="display:flex; gap:.8rem; align-items:center;">
+      <div class="lang-toggle">
+        <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" id="btn-ta" onclick="setLang('ta')">தமிழ்</button>
+      </div>
+      <a href="login.html" class="btn btn-primary" data-en="Sign In" data-ta="உள்நுழை">Sign In</a>
+    </div>
+  </nav>
+
+  <section class="hero" id="hero">
+    <div class="hero-slide current"></div>
+    <div class="hero-slide next"></div>
+    <div class="hero-copy">
+      <div class="hero-glass">
+        <h1>
+          <span data-en="Discover &amp; Create" data-ta="கண்டறியுங்கள் &amp; உருவாக்குங்கள்">Discover &amp; Create</span><br>
+          <span class="accent" data-en="Amazing Events ✦" data-ta="அற்புத நிகழ்வுகள் ✦">Amazing Events ✦</span>
+        </h1>
+        <p class="hero-sub" data-en="Eventra is your all-in-one platform to create events, manage registrations, and explore workshops, concerts, and conferences near you." data-ta="Eventra என்பது நிகழ்வுகளை உருவாக்க, பதிவுகளை நிர்வகிக்க மற்றும் உங்களுக்கு அருகில் உள்ள பட்டறைகள், கச்சேரிகள் மற்றும் மாநாடுகளை ஆராய உதவும் ஒரே தளம்.">
+          Eventra is your all-in-one platform to create events, manage registrations, and explore workshops, concerts, and conferences near you.
+        </p>
+        <div class="hero-actions">
+          <a href="login.html" class="btn btn-primary" data-en="🚀 Create Your Event" data-ta="🚀 உங்கள் நிகழ்வை உருவாக்குங்கள்">🚀 Create Your Event</a>
+        </div>
+        <p style="margin-top:1rem; font-size:0.9rem; color:#310f5b;"
+         data-en="🎟️ Create • Manage • Attend events easily"
+         data-ta="🎟️ உருவாக்குங்கள் • நிர்வகியுங்கள் • நிகழ்வுகளில் கலந்துகொள்ளுங்கள்">
+        🎟️ Create • Manage • Attend events easily
+      </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="stat-card reveal"><div class="stat-num">12K+</div><div class="stat-label" data-en="Events Created" data-ta="உருவாக்கப்பட்ட நிகழ்வுகள்">Events Created</div></div>
+    <div class="stat-card reveal"><div class="stat-num">98K+</div><div class="stat-label" data-en="Participants Registered" data-ta="பதிவு செய்த பங்கேற்பாளர்கள்">Participants Registered</div></div>
+    <div class="stat-card reveal"><div class="stat-num">160+</div><div class="stat-label" data-en="Cities Worldwide" data-ta="உலகெங்கும் நகரங்கள்">Cities Worldwide</div></div>
+  </div>
+
+  <section class="events-preview">
+    <div class="events-preview-header reveal">
+      <div>
+        <div class="section-tag" data-en="Upcoming" data-ta="வரவிருக்கும்">Upcoming</div>
+        <h2 class="section-title" data-en="Events happening soon" data-ta="விரைவில் நடக்கும் நிகழ்வுகள்">Events happening soon</h2>
+      </div>
+      <a href="events.html" class="btn btn-ghost" data-en="View all →" data-ta="அனைத்தும் காண்க →">View all →</a>
+    </div>
+    <div class="events-row">
+      <a href="login.html" class="event-card reveal">
+        <div class="ec-img ec-img-1">🎨</div>
+        <div class="ec-body">
+          <div class="ec-tag" data-en="Workshop" data-ta="பட்டறை">Workshop</div>
+          <div class="ec-title" data-en="UI / UX Masterclass 2025" data-ta="UI / UX மாஸ்டர்கிளாஸ் 2025">UI / UX Masterclass 2025</div>
+          <div class="ec-meta"><span>📅 <span class="date"></span></span><span>📍 Mumbai</span></div>
+          <div class="ec-footer"><span class="ec-spots" data-en="42 spots left" data-ta="42 இடங்கள் மீதம்">42 spots left</span><span class="ec-btn" data-en="View Details →" data-ta="விவரங்கள் காண்க →">View Details →</span></div>
+        </div>
+      </a>
+      <a href="login.html" class="event-card reveal">
+        <div class="ec-img ec-img-2">🎵</div>
+        <div class="ec-body">
+          <div class="ec-tag" data-en="Music" data-ta="இசை">Music</div>
+          <div class="ec-title" data-en="Indie Sound Fest 2025" data-ta="இண்டி சவுண்ட் பெஸ்ட் 2025">Indie Sound Fest 2025</div>
+          <div class="ec-meta"><span>📅 <span class="date"></span></span><span>📍 Bangalore</span></div>
+          <div class="ec-footer"><span class="ec-spots" data-en="120 spots left" data-ta="120 இடங்கள் மீதம்">120 spots left</span><span class="ec-btn" data-en="View Details →" data-ta="விவரங்கள் காண்க →">View Details →</span></div>
+        </div>
+      </a>
+      <a href="login.html" class="event-card reveal">
+        <div class="ec-img ec-img-3">💻</div>
+        <div class="ec-body">
+          <div class="ec-tag" data-en="Tech" data-ta="தொழில்நுட்பம்">Tech</div>
+          <div class="ec-title" data-en="AI &amp; Future Conf 2025" data-ta="AI &amp; எதிர்காலம் மாநாடு 2025">AI &amp; Future Conf 2025</div>
+          <div class="ec-meta"><span>📅 <span class="date"></span></span><span>📍 Delhi</span></div>
+          <div class="ec-footer"><span class="ec-spots" data-en="8 spots left" data-ta="8 இடங்கள் மீதம்">8 spots left</span><span class="ec-btn" data-en="View Details →" data-ta="விவரங்கள் காண்க →">View Details →</span></div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <section class="how">
+    <div class="reveal">
+      <div class="section-tag" data-en="Process" data-ta="செயல்முறை">Process</div>
+      <h2 class="section-title" data-en="Launch your event in 4 simple steps" data-ta="4 எளிய படிகளில் உங்கள் நிகழ்வை தொடங்குங்கள்">Launch your event in 4 simple steps</h2>
+    </div>
+    <div class="how-steps">
+      <div class="step-card reveal"><div class="step-num">1</div><h3 data-en="Create Event" data-ta="நிகழ்வை உருவாக்கு">Create Event</h3><p data-en="Fill in your event details, set the date, venue and ticket capacity." data-ta="உங்கள் நிகழ்வு விவரங்களை நிரப்பி, தேதி, இடம் மற்றும் டிக்கெட் எண்ணிக்கையை அமையுங்கள்.">Fill in your event details, set the date, venue and ticket capacity.</p></div>
+      <div class="step-card reveal"><div class="step-num">2</div><h3 data-en="Customise Page" data-ta="பக்கத்தை தனிப்பயனாக்கு">Customise Page</h3><p data-en="Add images, a description and your unique event branding." data-ta="படங்கள், விளக்கம் மற்றும் உங்கள் தனித்துவமான நிகழ்வு அடையாளத்தை சேர்க்கவும்.">Add images, a description and your unique event branding.</p></div>
+      <div class="step-card reveal"><div class="step-num">3</div><h3 data-en="Share &amp; Promote" data-ta="பகிர் &amp; விளம்பரப்படுத்து">Share &amp; Promote</h3><p data-en="Share your event link across socials and email lists in one click." data-ta="உங்கள் நிகழ்வு இணைப்பை சமூக வலைத்தளங்கள் மற்றும் மின்னஞ்சல்களில் ஒரே கிளிக்கில் பகிரவும்.">Share your event link across socials and email lists in one click.</p></div>
+      <div class="step-card reveal"><div class="step-num">4</div><h3 data-en="Track &amp; Grow" data-ta="கண்காணி &amp; வளர்">Track &amp; Grow</h3><p data-en="Monitor registrations live and download attendee reports any time." data-ta="பதிவுகளை நேரடியாக கண்காணித்து, கலந்துகொண்டவர் அறிக்கைகளை எந்த நேரத்திலும் பதிவிறக்கவும்.">Monitor registrations live and download attendee reports any time.</p></div>
+    </div>
+  </section>
+
+  <section class="testi">
+    <div class="reveal">
+      <div class="section-tag" data-en="Testimonials" data-ta="சான்றுரைகள்">Testimonials</div>
+      <h2 class="section-title" data-en="Loved by event creators" data-ta="நிகழ்வு உருவாக்குநர்களால் விரும்பப்படுகிறது">Loved by event creators</h2>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text" data-en='"Eventra made our annual design summit feel effortless. The registration flow is so smooth that we had zero drop-offs!"' data-ta='"Eventra எங்கள் வருடாந்திர வடிவமைப்பு மாநாட்டை மிகவும் எளிதாக்கியது. பதிவு செயல்முறை மிகவும் சுமுகமாக இருந்தது!"'>"Eventra made our annual design summit feel effortless. The registration flow is so smooth that we had zero drop-offs!"</p>
+        <div class="testi-author"><div class="testi-av tav1">P</div><div><div class="testi-name">Priya Sharma</div><div class="testi-role" data-en="Design Lead, CreativeCo" data-ta="வடிவமைப்பு தலைமை, CreativeCo">Design Lead, CreativeCo</div></div></div>
+      </div>
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text" data-en='"From creating our tech conference to managing 800+ attendees, Eventra handled everything beautifully."' data-ta='"எங்கள் தொழில்நுட்ப மாநாட்டை உருவாக்குவதிலிருந்து 800+ கலந்துகொண்டவர்களை நிர்வகிக்க, Eventra அனைத்தையும் அழகாக கையாண்டது."'>"From creating our tech conference to managing 800+ attendees, Eventra handled everything beautifully."</p>
+        <div class="testi-author"><div class="testi-av tav2">R</div><div><div class="testi-name">Rohan Mehta</div><div class="testi-role" data-en="CTO, StartupHub" data-ta="தொழில்நுட்ப இயக்குநர், StartupHub">CTO, StartupHub</div></div></div>
+      </div>
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text" data-en='"The dashboard gives me real-time clarity I never had before. Our events have grown 3× since switching to Eventra."' data-ta='"டாஷ்போர்டு எனக்கு இதற்கு முன் இல்லாத நேரடி தெளிவை தருகிறது. Eventra க்கு மாறியதிலிருந்து எங்கள் நிகழ்வுகள் 3 மடங்கு வளர்ந்தன."'>"The dashboard gives me real-time clarity I never had before. Our events have grown 3× since switching to Eventra."</p>
+        <div class="testi-author"><div class="testi-av tav3">A</div><div><div class="testi-name">Aanya Kapoor</div><div class="testi-role" data-en="Community Manager, DevCircle" data-ta="சமூக மேலாளர், DevCircle">Community Manager, DevCircle</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="cta-banner reveal">
+    <h2 data-en="Ready to create something unforgettable?" data-ta="மறக்கமுடியாத ஒன்றை உருவாக்க தயாரா?">Ready to create something unforgettable?</h2>
+    <p data-en="Join thousands of event creators and start planning your next masterpiece today." data-ta="ஆயிரக்கணக்கான நிகழ்வு உருவாக்குநர்களுடன் இணைந்து உங்கள் அடுத்த தலைசிறந்த படைப்பை இன்றே திட்டமிடுங்கள்.">Join thousands of event creators and start planning your next masterpiece today.</p>
+    <a href="login.html" class="btn btn-primary" style="font-size:1rem;padding:.9rem 2.2rem;" data-en="🚀 Get Started — It's Free" data-ta="🚀 தொடங்குங்கள் — இலவசம்">🚀 Get Started — It's Free</a>
+  </div>
+
+  <footer>
+    <div class="footer-brand">
+      <div class="nav-logo">Eventra</div>
+      <p data-en="Smart event management designed for the modern creator." data-ta="நவீன படைப்பாளர்களுக்காக வடிவமைக்கப்பட்ட சிறந்த நிகழ்வு மேலாண்மை.">Smart event management designed for the modern creator.</p>
+    </div>
+    <div class="footer-links">
+      <h4 data-en="Product" data-ta="தயாரிப்பு">Product</h4>
+      <a href="login.html" data-en="Browse Events" data-ta="நிகழ்வுகளை உலாவுக">Browse Events</a>
+      <a href="login.html" data-en="Create Event" data-ta="நிகழ்வை உருவாக்கு">Create Event</a>
+      <a href="login.html" data-en="Dashboard" data-ta="டாஷ்போர்டு">Dashboard</a>
+    </div>
+    <div class="footer-links">
+      <h4 data-en="Company" data-ta="நிறுவனம்">Company</h4>
+      <a href="#" data-en="About Us" data-ta="எங்களைப் பற்றி">About Us</a>
+      <a href="#" data-en="Blog" data-ta="வலைப்பதிவு">Blog</a>
+      <a href="#" data-en="Careers" data-ta="வேலைவாய்ப்புகள்">Careers</a>
+    </div>
+    <div class="footer-links">
+      <h4 data-en="Support" data-ta="ஆதரவு">Support</h4>
+      <a href="#" data-en="Help Centre" data-ta="உதவி மையம்">Help Centre</a>
+      <a href="#" data-en="Privacy Policy" data-ta="தனியுரிமைக் கொள்கை">Privacy Policy</a>
+      <a href="#" data-en="Terms of Service" data-ta="சேவை விதிமுறைகள்">Terms of Service</a>
+    </div>
+    <div class="footer-bottom">
+      <p data-en="©️ 2025 Eventra. Crafted with ♥️ for event creators everywhere." data-ta="©️ 2025 Eventra. எங்கும் உள்ள நிகழ்வு உருவாக்குநர்களுக்காக ♥️ உடன் உருவாக்கப்பட்டது.">©️ 2025 Eventra. Crafted with ♥️ for event creators everywhere.</p>
+      <p data-en="🌍 All rights reserved." data-ta="🌍 அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.">🌍 All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════
+       CHATBOT HTML
+  ═══════════════════════════════════════ -->
+  <div id="chat-badge">1 new</div>
+  <button id="chat-fab" onclick="toggleChat()" title="Chat with Eventra AI">✨</button>
+
+  <div id="chat-window">
+    <!-- Header with language pill -->
+    <div class="chat-header">
+      <div class="chat-av-wrap"><div class="chat-av">🤖</div></div>
+      <div class="chat-header-info">
+        <div class="chat-title" id="chat-title-text">Eventra AI Assistant</div>
+        <div class="chat-subtitle" id="chat-subtitle-text">Powered by Groq · Voice enabled 🎤</div>
+      </div>
+      <!-- ── Language toggle inside chatbot header ── -->
+      <div class="chat-lang-pill">
+        <button id="chat-btn-en" class="active" onclick="setChatLang('en')">EN</button>
+        <button id="chat-btn-ta"               onclick="setChatLang('ta')">தமிழ்</button>
+      </div>
+      <button class="chat-close" onclick="toggleChat()" title="Close">✕</button>
+    </div>
+
+    <div id="voice-status">🎤 கேட்கிறேன்… பேசுங்கள்</div>
+    <div id="chat-messages"></div>
+
+    <!-- Chips (will be re-rendered on lang switch) -->
+    <div class="chips-row" id="chips-row"></div>
+
+    <div class="chat-input-wrap">
+      <button id="chat-clear-btn" onclick="clearChat()" title="Clear chat">🗑</button>
+      <textarea id="chat-input" rows="1"
+        onkeydown="handleChatKey(event)"
+        oninput="autoChatResize(this)"></textarea>
+      <button id="voice-btn" onclick="toggleVoice()" title="Voice input">🎤</button>
+      <button id="chat-send-btn" onclick="sendMessage()" title="Send">➤</button>
+    </div>
+  </div>
+
+  <script>
+    /* ══════════════════════════════════════════
+       PAGE SCRIPTS
+    ══════════════════════════════════════════ */
+    document.addEventListener("DOMContentLoaded", () => {
+
+      /* REVEAL */
+      const reveals = document.querySelectorAll('.reveal');
+      if ('IntersectionObserver' in window) {
+        const revealObserver = new IntersectionObserver(entries => {
+          entries.forEach((entry, i) => {
+            if (entry.isIntersecting) {
+              setTimeout(() => entry.target.classList.add('visible'), i * 80);
+              revealObserver.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.12 });
+        reveals.forEach(el => revealObserver.observe(el));
+      } else {
+        reveals.forEach(el => el.classList.add('visible'));
+      }
+
+      /* STATS COUNTER */
+      document.querySelectorAll('.stat-num').forEach(el => {
+        let hasAnimated = false;
+        const text   = el.textContent;
+        const num    = parseFloat(text.replace(/[^0-9.]/g, ''));
+        const suffix = text.replace(/[0-9.]/g, '');
+        const animate = (timestamp, start = null) => {
+          if (!start) start = timestamp;
+          const progress = Math.min((timestamp - start) / 1800, 1);
+          el.textContent = (num * progress).toFixed(num % 1 ? 1 : 0) + suffix;
+          if (progress < 1) requestAnimationFrame(t => animate(t, start));
+        };
+        const observer = new IntersectionObserver(entries => {
+          if (entries[0].isIntersecting && !hasAnimated) {
+            hasAnimated = true;
+            requestAnimationFrame(animate);
+            observer.disconnect();
+          }
+        });
+        observer.observe(el);
+      });
+
+      /* BACKGROUND SLIDER */
+      const images = [
+        "images/img1.jpeg","images/img2.jpeg","images/img3.jpeg",
+        "images/img4.jpeg","images/img5.jpeg","images/img6.jpeg",
+        "images/img7.jpeg","images/img8.jpeg","images/img9.jpeg"
+      ];
+      let currentIndex = 0;
+      const hero = document.getElementById("hero");
+      function changeBackground() {
+        if (!hero || images.length === 0) return;
+        const img = new Image();
+        img.src = images[currentIndex];
+        img.onload  = () => { hero.style.backgroundImage = `url('${images[currentIndex]}')`; currentIndex = (currentIndex + 1) % images.length; };
+        img.onerror = () => { currentIndex = (currentIndex + 1) % images.length; };
+      }
+      changeBackground();
+      setInterval(changeBackground, 5000);
+
+      /* DYNAMIC DATES */
+      document.querySelectorAll(".date").forEach((el, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() + (i + 1) * 3);
+        el.textContent = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+      });
+
+      /* CHATBOT BADGE */
+      setTimeout(() => { if (!chatIsOpen) document.getElementById('chat-badge').style.display = 'block'; }, 2000);
+
+      /* INIT CHATBOT UI for saved lang */
+      applyChatLang(chatLang);
+    });
+
+    /* SLIDE ANIMATION */
+    const slides = document.querySelectorAll(".hero-slide");
+    let slideIndex = 0;
+    setInterval(() => {
+      const current    = slides[slideIndex];
+      const nextIndex  = (slideIndex + 1) % slides.length;
+      const next       = slides[nextIndex];
+      slides.forEach(s => s.classList.remove("current", "next", "exit"));
+      current.classList.add("exit");
+      next.classList.add("current");
+      const upcomingIndex = (nextIndex + 1) % slides.length;
+      slides[upcomingIndex].classList.add("next");
+      slideIndex = nextIndex;
+    }, 2000);
+
+    /* ══════════════════════════════════════════
+       PAGE LANGUAGE SWITCHER
+    ══════════════════════════════════════════ */
+    let currentLang = localStorage.getItem('eventra-lang') || 'en';
+
+    function setLang(lang) {
+      currentLang = lang;
+      localStorage.setItem('eventra-lang', lang);
+      document.documentElement.lang = lang === 'ta' ? 'ta' : 'en';
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      document.getElementById('btn-ta').classList.toggle('active', lang === 'ta');
+      document.querySelectorAll('[data-en]').forEach(el => {
+        const text = el.getAttribute('data-' + lang);
+        if (text !== null) {
+          const hasElementChildren = Array.from(el.childNodes).some(n => n.nodeType === 1);
+          if (!hasElementChildren) el.innerHTML = text;
+        }
+      });
+      document.querySelectorAll('h1 [data-en], h1 [data-ta]').forEach(el => {
+        const text = el.getAttribute('data-' + lang);
+        if (text !== null) el.innerHTML = text;
+      });
+
+      // ── Sync chatbot language with page language ──
+      setChatLang(lang);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => { setLang(currentLang); });
+
+    window.logout = function () {
+      localStorage.removeItem("email");
+      localStorage.removeItem("loggedIn");
+      window.location.replace("login.html");
+    };
+
+    /* ══════════════════════════════════════════
+       GROQ CHATBOT
+    ══════════════════════════════════════════ */
+    const GROQ_API_KEY = 'YOUR_API_KEY'; // ← paste your Groq key
+    const GROQ_URL     = 'https://api.groq.com/openai/v1/chat/completions';
+
+    /* ── Bilingual content ── */
+    const CHAT_CONTENT = {
+      en: {
+        title:        'Eventra AI Assistant',
+        subtitle:     'Powered by Groq · Voice enabled 🎤',
+        placeholder:  'Ask anything or use 🎤 to speak…',
+        voiceStatus:  '🎤 Listening… speak now',
+        clearConfirm: 'Clear this conversation?',
+        clearMsg:     "Chat cleared! 🌸 How can I help you?",
+        welcomeMsg:   `Hi there! 👋 I'm **Eventra AI**, your smart event assistant.\n\nYou can **type** or use the 🎤 **voice button** to talk to me. I can help you find events, create your own, or learn about Eventra!`,
+        chips: ['📅 Upcoming events', '🚀 Create event', '💰 Pricing info', '📍 Find events'],
+        speakBtn:  '🔊 Speak',
+        stopBtn:   '⏹ Stop',
+        systemPrompt: `You are Eventra AI, a smart and friendly assistant on the Eventra homepage — a professional event management platform.
+
+You help visitors with:
+- Learning about Eventra and its features
+- Finding and browsing upcoming events (UI/UX Masterclass, Indie Sound Fest, AI & Future Conf)
+- How to create and manage events on Eventra
+- Registration process and ticket information
+- Navigating the platform (Dashboard, Events page, Add Event)
+
+Always reply in English. Keep responses concise, warm, and helpful. Use emojis sparingly.`,
+        voiceLang: 'en-IN',
+      },
+      ta: {
+        title:        'Eventra AI உதவியாளர்',
+        subtitle:     'Groq மூலம் இயக்கப்படுகிறது · குரல் இயக்கப்பட்டது 🎤',
+        placeholder:  'எதையும் கேளுங்கள் அல்லது 🎤 பயன்படுத்தி பேசுங்கள்…',
+        voiceStatus:  '🎤 கேட்கிறேன்… தமிழில் பேசுங்கள்',
+        clearConfirm: 'இந்த உரையாடலை அழிக்கவா?',
+        clearMsg:     "அரட்டை அழிக்கப்பட்டது! 🌸 நான் எப்படி உதவலாம்?",
+        welcomeMsg:   `வணக்கம்! 👋 நான் **Eventra AI**, உங்கள் நிகழ்வு உதவியாளர்.\n\n**தட்டச்சு** செய்யலாம் அல்லது 🎤 **குரல் பொத்தானை** பயன்படுத்தி தமிழில் பேசலாம். நிகழ்வுகளை கண்டுபிடிக்க, உருவாக்க அல்லது Eventra பற்றி அறிய நான் உதவுவேன்!`,
+        chips: ['📅 வரவிருக்கும் நிகழ்வுகள்', '🚀 நிகழ்வை உருவாக்கு', '💰 விலை தகவல்', '📍 நிகழ்வுகளை தேடு'],
+        speakBtn:  '🔊 கேளுங்கள்',
+        stopBtn:   '⏹ நிறுத்து',
+        systemPrompt: `நீங்கள் Eventra AI — Eventra இன் முகப்பு பக்கத்தில் உள்ள ஒரு நட்பான தமிழ் உதவியாளர். Eventra என்பது ஒரு நிகழ்வு மேலாண்மை தளம்.
+
+நீங்கள் பார்வையாளர்களுக்கு உதவுகிறீர்கள்:
+- Eventra மற்றும் அதன் அம்சங்களை பற்றி அறிய
+- வரவிருக்கும் நிகழ்வுகளை (UI/UX மாஸ்டர்கிளாஸ், இண்டி சவுண்ட் பெஸ்ட், AI மாநாடு) கண்டுபிடிக்க
+- நிகழ்வுகளை உருவாக்க மற்றும் நிர்வகிக்க
+- பதிவு செயல்முறை மற்றும் டிக்கெட் தகவல்
+- தளத்தில் செல்ல (டாஷ்போர்டு, நிகழ்வுகள் பக்கம், நிகழ்வு சேர்)
+
+எப்போதும் தமிழில் பதிலளிக்கவும். பதில்கள் சுருக்கமாக, அன்பாக மற்றும் உதவியாக இருக்கட்டும்.`,
+        voiceLang: 'ta-IN',
+      }
+    };
+
+    /* ── Chat state ── */
+    let chatLang    = localStorage.getItem('eventra-chat-lang') || localStorage.getItem('eventra-lang') || 'en';
+    let chatHistory = [];
+    let chatIsOpen  = false;
+    let chatTyping  = false;
+
+    /* ── Apply language to chatbot UI ── */
+    function applyChatLang(lang) {
+      const c = CHAT_CONTENT[lang];
+
+      // Header
+      document.getElementById('chat-title-text').textContent    = c.title;
+      document.getElementById('chat-subtitle-text').textContent  = c.subtitle;
+
+      // Language pill buttons
+      document.getElementById('chat-btn-en').classList.toggle('active', lang === 'en');
+      document.getElementById('chat-btn-ta').classList.toggle('active', lang === 'ta');
+
+      // Input placeholder
+      document.getElementById('chat-input').placeholder = c.placeholder;
+
+      // Voice status
+      document.getElementById('voice-status').textContent = c.voiceStatus;
+
+      // Chips
+      const chipsRow = document.getElementById('chips-row');
+      chipsRow.innerHTML = c.chips.map(chip =>
+        `<button class="chip" onclick="sendChip(this)">${chip}</button>`
+      ).join('');
+    }
+
+    /* ── Switch chat language ── */
+    function setChatLang(lang) {
+      chatLang = lang;
+      localStorage.setItem('eventra-chat-lang', lang);
+      applyChatLang(lang);
+    }
+
+    /* ── Open / Close ── */
+    function toggleChat() {
+      chatIsOpen = !chatIsOpen;
+      document.getElementById('chat-window').classList.toggle('open', chatIsOpen);
+      document.getElementById('chat-fab').classList.toggle('open', chatIsOpen);
+      document.getElementById('chat-fab').textContent = chatIsOpen ? '✕' : '✨';
+      document.getElementById('chat-badge').style.display = 'none';
+
+      if (chatIsOpen && chatHistory.length === 0) {
+        appendBotMsg(CHAT_CONTENT[chatLang].welcomeMsg);
+      }
+      if (chatIsOpen) setTimeout(() => document.getElementById('chat-input').focus(), 300);
+    }
+
+    function sendChip(btn) {
+      const text = btn.textContent.replace(/^\S+\s/, '').trim();
+      document.getElementById('chat-input').value = text;
+      document.getElementById('chips-row').style.display = 'none';
+      sendMessage();
+    }
+
+    function autoChatResize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+    }
+
+    function handleChatKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    }
+
+    /* ── Send message ── */
+    async function sendMessage() {
+      const input = document.getElementById('chat-input');
+      const text  = input.value.trim();
+      if (!text || chatTyping) return;
+      input.value = ''; input.style.height = 'auto';
+      document.getElementById('chat-send-btn').disabled = true;
+      appendUserMsg(text);
+      chatHistory.push({ role: 'user', content: text });
+      showTypingDots();
+      chatTyping = true;
+      try {
+        const reply = await callGroq();
+        hideTypingDots();
+        appendBotMsg(reply);
+        chatHistory.push({ role: 'assistant', content: reply });
+      } catch (err) {
+        hideTypingDots();
+        appendChatError('⚠️ ' + (err.message || 'Something went wrong. Please try again.'));
+      } finally {
+        chatTyping = false;
+        document.getElementById('chat-send-btn').disabled = false;
+        document.getElementById('chat-input').focus();
+      }
+    }
+
+    /* ── Groq API call with correct language system prompt ── */
+    async function callGroq() {
+      // Use the system prompt for the current chat language
+      const systemPrompt = CHAT_CONTENT[chatLang].systemPrompt;
+      const messages = [{ role: 'system', content: systemPrompt }, ...chatHistory];
+
+      const res = await fetch(GROQ_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${GROQ_API_KEY}`
+        },
+        body: JSON.stringify({
+          model:       'llama-3.1-8b-instant',
+          messages,
+          max_tokens:  600,
+          temperature: 0.75
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `HTTP ${res.status}`);
+      }
+      const data  = await res.json();
+      const reply = data?.choices?.[0]?.message?.content;
+      if (!reply) throw new Error('No response received. Please try again.');
+      return reply;
+    }
+
+    /* ── DOM helpers ── */
+    function appendUserMsg(text) {
+      document.getElementById('chat-messages').innerHTML += `
+        <div class="msg-row user">
+          <div class="msg-av user">👤</div>
+          <div>
+            <div class="msg-bubble user">${escChat(text)}</div>
+            <div class="msg-time">${chatNow()}</div>
+          </div>
+        </div>`;
+      chatScroll();
+    }
+
+    function appendBotMsg(text) {
+      const speakLabel = CHAT_CONTENT[chatLang].speakBtn;
+      document.getElementById('chat-messages').innerHTML += `
+        <div class="msg-row">
+          <div class="msg-av bot">✨</div>
+          <div>
+            <div class="msg-bubble bot">${fmtChat(text)}</div>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <div class="msg-time">Eventra AI · ${chatNow()}</div>
+              <button class="speak-btn" onclick="speakText(this,'${escAttr(text)}')" title="Read aloud">${speakLabel}</button>
+            </div>
+          </div>
+        </div>`;
+      chatScroll();
+      if (!chatIsOpen) document.getElementById('chat-badge').style.display = 'block';
+    }
+
+    function appendChatError(msg) {
+      document.getElementById('chat-messages').innerHTML += `<div class="msg-error">${escChat(msg)}</div>`;
+      chatScroll();
+    }
+
+    function showTypingDots() {
+      document.getElementById('chat-messages').innerHTML += `
+        <div class="msg-row" id="typing-row">
+          <div class="msg-av bot">✨</div>
+          <div class="typing-indicator">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        </div>`;
+      chatScroll();
+    }
+
+    function hideTypingDots() { document.getElementById('typing-row')?.remove(); }
+
+    function clearChat() {
+      if (!confirm(CHAT_CONTENT[chatLang].clearConfirm)) return;
+      stopSpeaking();
+      chatHistory = [];
+      document.getElementById('chat-messages').innerHTML = '';
+      document.getElementById('chips-row').style.display = 'flex';
+      appendBotMsg(CHAT_CONTENT[chatLang].clearMsg);
+    }
+
+    function chatScroll() {
+      const m = document.getElementById('chat-messages');
+      setTimeout(() => m.scrollTop = m.scrollHeight, 50);
+    }
+
+    function escChat(str) {
+      return str
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+    }
+    function escAttr(str) { return str.replace(/'/g,"\\'").replace(/\n/g,' ').replace(/"/g,'&quot;'); }
+    function fmtChat(str) {
+      return str
+        .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g,'<em>$1</em>')
+        .replace(/`(.*?)`/g,'<code style="background:rgba(160,80,180,.1);border-radius:4px;padding:.1em .3em;font-size:.82em;">$1</code>')
+        .replace(/\n/g,'<br>');
+    }
+    function chatNow() { return new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }); }
+
+    /* ══════════════════════════════════════════
+       🎤 VOICE INPUT — language-aware
+    ══════════════════════════════════════════ */
+    let recognition = null;
+    let isListening = false;
+
+    function initRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) return null;
+
+      const rec = new SpeechRecognition();
+      // ── Use Tamil voice recognition when chatLang is 'ta' ──
+      rec.lang           = CHAT_CONTENT[chatLang].voiceLang;
+      rec.continuous     = false;
+      rec.interimResults = true;
+
+      rec.onstart = () => {
+        isListening = true;
+        document.getElementById('voice-btn').classList.add('listening');
+        document.getElementById('voice-btn').textContent = '🔴';
+        document.getElementById('voice-status').style.display = 'block';
+        document.getElementById('chat-input').placeholder =
+          chatLang === 'ta' ? 'கேட்கிறேன்…' : 'Listening…';
+      };
+
+      rec.onresult = (e) => {
+        const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
+        document.getElementById('chat-input').value = transcript;
+        autoChatResize(document.getElementById('chat-input'));
+        if (e.results[e.results.length - 1].isFinal) {
+          stopListening();
+          setTimeout(() => sendMessage(), 400);
+        }
+      };
+
+      rec.onerror = (e) => {
+        stopListening();
+        if (e.error === 'not-allowed') {
+          appendChatError(chatLang === 'ta'
+            ? '⚠️ மைக்ரோஃபோன் அணுகல் மறுக்கப்பட்டது. அனுமதி தரவும்.'
+            : '⚠️ Microphone access denied. Please allow microphone in browser settings.');
+        } else if (e.error !== 'no-speech') {
+          appendChatError('⚠️ Voice error: ' + e.error);
+        }
+      };
+
+      rec.onend = () => { stopListening(); };
+      return rec;
+    }
+
+    function toggleVoice() {
+      if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+        appendChatError(chatLang === 'ta'
+          ? '⚠️ இந்த உலாவியில் குரல் உள்ளீடு ஆதரிக்கப்படவில்லை. Chrome பயன்படுத்தவும்.'
+          : '⚠️ Voice input is not supported in this browser. Try Chrome.');
+        return;
+      }
+      isListening ? stopListening() : startListening();
+    }
+
+    function startListening() {
+      recognition = initRecognition();
+      if (!recognition) return;
+      try { recognition.start(); } catch(e) { console.warn(e); }
+    }
+
+    function stopListening() {
+      isListening = false;
+      document.getElementById('voice-btn').classList.remove('listening');
+      document.getElementById('voice-btn').textContent = '🎤';
+      document.getElementById('voice-status').style.display = 'none';
+      document.getElementById('chat-input').placeholder = CHAT_CONTENT[chatLang].placeholder;
+      if (recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
+    }
+
+    /* ══════════════════════════════════════════
+       🔊 VOICE OUTPUT — language-aware TTS
+    ══════════════════════════════════════════ */
+    let currentUtterance = null;
+
+    function speakText(btn, text) {
+      if (!window.speechSynthesis) {
+        appendChatError('⚠️ Text-to-speech not supported in this browser.');
+        return;
+      }
+
+      // If already speaking → stop
+      if (window.speechSynthesis.speaking) {
+        stopSpeaking();
+        document.querySelectorAll('.speak-btn').forEach(b => {
+          b.classList.remove('speaking');
+          b.textContent = CHAT_CONTENT[chatLang].speakBtn;
+        });
+        return;
+      }
+
+      // Clean text
+      const clean = text
+        .replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1')
+        .replace(/`(.*?)`/g,'$1').replace(/<br>/g,' ')
+        .replace(/&amp;/g,'&').replace(/&lt;/g,'<')
+        .replace(/&gt;/g,'>').replace(/&quot;/g,'"');
+
+      currentUtterance       = new SpeechSynthesisUtterance(clean);
+      // ── Use Tamil TTS voice when chatLang is 'ta' ──
+      currentUtterance.lang  = CHAT_CONTENT[chatLang].voiceLang;
+      currentUtterance.rate  = chatLang === 'ta' ? 0.88 : 0.95;
+      currentUtterance.pitch = 1.05;
+      currentUtterance.volume = 1;
+
+      // Pick best matching voice
+      const voices    = window.speechSynthesis.getVoices();
+      const preferred = chatLang === 'ta'
+        ? voices.find(v => v.lang === 'ta-IN' || v.lang.startsWith('ta'))
+            || voices.find(v => v.lang.startsWith('en'))
+            || voices[0]
+        : voices.find(v => v.lang === 'en-IN')
+            || voices.find(v => v.lang.startsWith('en'))
+            || voices[0];
+
+      if (preferred) currentUtterance.voice = preferred;
+
+      btn.classList.add('speaking');
+      btn.textContent = CHAT_CONTENT[chatLang].stopBtn;
+
+      currentUtterance.onend = () => {
+        btn.classList.remove('speaking');
+        btn.textContent = CHAT_CONTENT[chatLang].speakBtn;
+        currentUtterance = null;
+      };
+      currentUtterance.onerror = () => {
+        btn.classList.remove('speaking');
+        btn.textContent = CHAT_CONTENT[chatLang].speakBtn;
+        currentUtterance = null;
+      };
+
+      window.speechSynthesis.speak(currentUtterance);
+    }
+
+    function stopSpeaking() {
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      currentUtterance = null;
+    }
+
+    // Pre-load voices
+    window.speechSynthesis?.getVoices();
+    window.speechSynthesis?.addEventListener('voiceschanged', () => window.speechSynthesis.getVoices());
+  </script>
+
+</body>
+</html>

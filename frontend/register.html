@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eventra – Sign Up</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
+:root {
+  --rose:#f4a7b9;
+  --lavender:#c9b8f0;
+  --sky:#a8d8f0;
+  --glass-bg:rgba(255,255,255,0.55);
+  --glass-border:rgba(255,255,255,0.75);
+}
+
+body{
+  font-family:'DM Sans',sans-serif;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background: linear-gradient(135deg,#fde8f0,#fef3e2,#e8eaff,#e0f7f4);
+}
+
+/* blobs */
+.blob{
+  position:fixed;
+  border-radius:50%;
+  filter:blur(80px);
+  opacity:.45;
+}
+.b1{width:400px;height:400px;background:var(--rose);top:-100px;left:-100px;}
+.b2{width:350px;height:350px;background:var(--lavender);bottom:-100px;right:-100px;}
+
+.card{
+  width:360px;
+  padding:2.5rem 2rem;
+  border-radius:24px;
+  background:var(--glass-bg);
+  backdrop-filter:blur(18px);
+  border:1.5px solid var(--glass-border);
+  text-align:center;
+  box-shadow:0 10px 40px rgba(160,100,180,0.2);
+}
+
+.logo{
+  font-family:'Playfair Display';
+  font-size:1.8rem;
+  font-weight:900;
+  margin-bottom:1rem;
+  color: #5a4619;
+  background-image: linear-gradient(135deg,#e07090,#a070d0,#50b8d8);
+  background-repeat: no-repeat;
+  background-size: 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.input-group{
+  text-align:left;
+  margin-bottom:1rem;
+}
+
+input{
+  width:100%;
+  padding:.7rem;
+  border-radius:10px;
+  border:1px solid var(--glass-border);
+  background:rgba(255,255,255,0.6);
+}
+
+button{
+  width:100%;
+  padding:.75rem;
+  border:none;
+  border-radius:50px;
+  background:linear-gradient(135deg,#e07090,#a070d0);
+  color:white;
+  font-weight:600;
+  margin-top:.5rem;
+  cursor:pointer;
+}
+
+.extra{
+  margin-top:1rem;
+  font-size:.8rem;
+}
+</style>
+</head>
+
+<body>
+
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+
+<div class="card">
+  <div class="logo">Eventra</div>
+  <h2>Create Account ✨</h2>
+
+  <form onsubmit="return register(event)">
+    <div class="input-group">
+  <input type="text" id="fullname" placeholder="Full Name" required>
+</div>
+
+<div class="input-group">
+  <input type="email" id="userEmail" placeholder="Email" required>
+</div>
+
+<div class="input-group">
+  <input type="password" id="userPassword" placeholder="Password" required>
+</div>
+
+    <button type="submit">Sign Up</button>
+  </form>
+
+  <div class="extra">
+    Already have an account? <a href="login.html">Login</a>
+  </div>
+  <div style="margin-top:20px; text-align:center;">
+  <button onclick="goHome()" style="background:#eee;color:#333;font-weight:700;">
+    ← Back to Home
+  </button>
+</div>
+</div>
+</div>
+
+<script>
+function register(e){
+  e.preventDefault();
+
+  const nameVal = document.getElementById("fullname").value.trim();
+  const emailVal = document.getElementById("userEmail").value.trim();
+  const passwordVal = document.getElementById("userPassword").value.trim();
+
+  if(!nameVal || !emailVal || !passwordVal){
+    alert("Please fill all fields");
+    return false; // ✅ important
+  }
+
+  const user = {
+    name: nameVal,
+    email: emailVal,
+    password: passwordVal
+  };
+
+  localStorage.setItem("eventra_user", JSON.stringify(user));
+
+  alert("Account created!");
+  window.location.href = "login.html";
+
+  return false; // ✅ prevents default submit
+}
+
+function goHome(){
+  window.location.href = "home.html";
+}
+</script>
+</body>
+</html>

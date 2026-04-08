@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Eventra – My Ticket</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --rose:#f4a7b9; --peach:#f9c784; --lavender:#c9b8f0; --sky:#a8d8f0; --mint:#aaecdc;
+      --glass:rgba(255,255,255,0.55); --glass-b:rgba(255,255,255,0.78);
+      --shadow:0 8px 40px rgba(180,120,140,0.18);
+      --dark:#3a2a3e; --mid:#7a6080; --light:#b8a8c0; --radius:20px; --nav-h:72px;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family:'DM Sans',sans-serif;
+      background:linear-gradient(135deg,#fde8f0 0%,#fef3e2 30%,#e8eaff 65%,#e0f7f4 100%);
+      min-height:100vh; color:var(--dark); overflow-x:hidden;
+    }
+    .blob { position:fixed; border-radius:50%; filter:blur(80px); opacity:.42; pointer-events:none; z-index:0; animation:blobDrift 16s ease-in-out infinite alternate; }
+    .b1 { width:420px; height:420px; background:var(--rose);     top:-100px; left:-100px; animation-delay:0s; }
+    .b2 { width:360px; height:360px; background:var(--lavender); bottom:-80px; right:-80px; animation-delay:-5s; }
+    .b3 { width:260px; height:260px; background:var(--mint);     top:40%; left:60%; animation-delay:-10s; }
+    @keyframes blobDrift { from{transform:translate(0,0) scale(1)} to{transform:translate(18px,24px) scale(1.06)} }
+    nav {
+      position:fixed; top:0; left:0; right:0; z-index:200; height:var(--nav-h);
+      display:flex; align-items:center; justify-content:space-between; padding:0 5%;
+      background:rgba(255,248,245,0.72); backdrop-filter:blur(18px);
+      border-bottom:1px solid var(--glass-b); box-shadow:0 2px 24px rgba(200,140,160,0.10);
+    }
+    .nav-logo {
+      font-family:'Playfair Display',serif; font-size:1.6rem; font-weight:900; letter-spacing:-.5px;
+      background:linear-gradient(135deg,#e07090,#a070d0,#50b8d8);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; text-decoration:none;
+    }
+    .nav-center { font-size:.88rem; font-weight:600; color:var(--mid); display:flex; align-items:center; gap:.5rem; }
+    .nav-center .page-label {
+      background:linear-gradient(135deg,rgba(253,232,240,.7),rgba(232,234,255,.7));
+      border:1px solid var(--glass-b); border-radius:50px; padding:.3rem .9rem; font-size:.78rem;
+    }
+    .nav-actions { display:flex; gap:.8rem; align-items:center; }
+    .btn {
+      display:inline-flex; align-items:center; gap:.45rem; padding:.6rem 1.4rem; border:none; cursor:pointer;
+      border-radius:50px; font-family:'DM Sans',sans-serif; font-size:.88rem; font-weight:600; text-decoration:none;
+      transition:transform .2s,filter .2s,box-shadow .2s;
+    }
+    .btn:hover { transform:translateY(-2px); filter:brightness(1.06); }
+    .btn-ghost { background:var(--glass); backdrop-filter:blur(10px); border:1.5px solid var(--glass-b); color:var(--dark); }
+    .btn-outline { background:transparent; border:1.5px solid rgba(201,184,240,.5); color:var(--mid); }
+    .btn-outline:hover { border-color:var(--lavender); color:#a070d0; background:rgba(255,255,255,.4); }
+    .page-wrap {
+      position:relative; z-index:1;
+      padding:calc(var(--nav-h) + 2.5rem) 5% 5rem;
+      max-width:860px; margin:0 auto;
+      display:flex; flex-direction:column; align-items:center; gap:2rem;
+    }
+    .page-heading { text-align:center; animation:fadeUp .7s ease both; }
+    .page-heading .badge {
+      display:inline-flex; align-items:center; gap:.5rem; background:var(--glass);
+      backdrop-filter:blur(12px); border:1px solid var(--glass-b); border-radius:50px;
+      padding:.36rem 1rem; font-size:.8rem; font-weight:600; color:var(--mid); margin-bottom:.9rem;
+    }
+    .badge-dot { width:7px; height:7px; border-radius:50%; background:linear-gradient(135deg,#e07090,#a070d0); display:block; animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.5);opacity:.5} }
+    .page-heading h1 { font-family:'Playfair Display',serif; font-size:clamp(1.8rem,4vw,2.8rem); font-weight:900; line-height:1.2; color:var(--dark); }
+    .page-heading h1 .acc { background:linear-gradient(135deg,#e07090,#a070d0); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .page-heading p { font-size:.9rem; color:var(--mid); margin-top:.5rem; line-height:1.6; }
+    .ticket-wrapper { width:100%; max-width:620px; animation:cardIn .65s cubic-bezier(.4,0,.2,1) .1s both; }
+    @keyframes cardIn { from{opacity:0;transform:translateY(32px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+    .ticket { border-radius:28px; overflow:hidden; box-shadow:0 24px 64px rgba(160,100,180,.22),0 4px 16px rgba(160,100,180,.10); position:relative; }
+    .ticket-header {
+      background:linear-gradient(135deg,#e07090 0%,#a070d0 55%,#50b8d8 100%);
+      padding:2.2rem 2.5rem 2rem; position:relative; overflow:hidden;
+    }
+    .ticket-header::before,.ticket-header::after { content:''; position:absolute; border-radius:50%; background:rgba(255,255,255,.08); }
+    .ticket-header::before { width:200px; height:200px; top:-60px; right:-40px; }
+    .ticket-header::after  { width:120px; height:120px; bottom:-40px; left:40%; }
+    .ticket-event-cat {
+      display:inline-flex; align-items:center; gap:.35rem;
+      background:rgba(255,255,255,.22); backdrop-filter:blur(8px);
+      border:1px solid rgba(255,255,255,.35); border-radius:50px;
+      padding:.26rem .85rem; font-size:.72rem; font-weight:700; color:#fff;
+      letter-spacing:.06em; text-transform:uppercase; margin-bottom:.9rem; position:relative; z-index:1;
+    }
+    .ticket-event-title { font-family:'Playfair Display',serif; font-size:clamp(1.5rem,4vw,2rem); font-weight:900; color:#fff; line-height:1.2; position:relative; z-index:1; }
+    .ticket-event-subtitle { font-size:.84rem; color:rgba(255,255,255,.78); margin-top:.4rem; position:relative; z-index:1; }
+    .ticket-type-badge {
+      position:absolute; top:1.4rem; right:1.8rem; z-index:2;
+      background:rgba(255,255,255,.22); backdrop-filter:blur(10px);
+      border:1.5px solid rgba(255,255,255,.4); border-radius:14px; padding:.5rem .9rem; text-align:center;
+    }
+    .ticket-type-badge .tb-label { font-size:.64rem; color:rgba(255,255,255,.7); font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
+    .ticket-type-badge .tb-type  { font-size:.9rem; font-weight:800; color:#fff; margin-top:.1rem; }
+    .ticket-body { background:var(--glass); backdrop-filter:blur(24px); border:1.5px solid var(--glass-b); border-top:none; padding:0 2.5rem 2.5rem; }
+    .attendee-strip { display:flex; align-items:center; gap:1.1rem; padding:1.2rem 0; border-bottom:1.5px dashed rgba(200,180,220,.3); margin-bottom:1.6rem; }
+    .att-avatar { width:50px; height:50px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,#e07090,#a070d0); display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:800; color:#fff; box-shadow:0 4px 14px rgba(160,80,180,.3); }
+    .att-name  { font-size:1rem; font-weight:700; color:var(--dark); }
+    .att-label { font-size:.74rem; color:var(--light); margin-top:.1rem; }
+    .att-id { margin-left:auto; font-family:'DM Mono',monospace; font-size:.78rem; font-weight:500; color:#a070d0; background:linear-gradient(135deg,rgba(253,232,240,.6),rgba(232,234,255,.6)); border:1px solid rgba(201,184,240,.3); border-radius:8px; padding:.3rem .7rem; white-space:nowrap; }
+    .meta-grid { display:grid; grid-template-columns:1fr 1fr; gap:.9rem; margin-bottom:1.6rem; }
+    .meta-item { background:linear-gradient(135deg,rgba(253,232,240,.45),rgba(232,234,255,.45)); border:1px solid var(--glass-b); border-radius:16px; padding:.9rem 1rem; display:flex; align-items:flex-start; gap:.75rem; }
+    .meta-ico { width:34px; height:34px; border-radius:10px; flex-shrink:0; background:linear-gradient(135deg,#fde8f0,#e8eaff); display:flex; align-items:center; justify-content:center; font-size:1rem; }
+    .meta-label { font-size:.7rem; color:var(--light); margin-bottom:.2rem; font-weight:600; letter-spacing:.03em; }
+    .meta-val   { font-size:.88rem; font-weight:700; color:var(--dark); line-height:1.3; }
+    .perforation { position:relative; margin:0 -2.5rem 1.8rem; display:flex; align-items:center; }
+    .perf-notch { width:24px; height:24px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,#fde8f0 0%,#fef3e2 50%,#e8eaff 100%); border:1.5px solid rgba(201,184,240,.35); }
+    .perf-line  { flex:1; height:0; border-top:2.5px dashed rgba(201,184,240,.45); }
+    .perf-label { position:absolute; left:50%; transform:translateX(-50%); background:rgba(255,255,255,.88); backdrop-filter:blur(8px); border:1px solid var(--glass-b); border-radius:50px; padding:.22rem .8rem; font-size:.7rem; font-weight:700; color:var(--mid); white-space:nowrap; letter-spacing:.04em; }
+    .qr-section { display:flex; flex-direction:column; align-items:center; gap:.7rem; margin-bottom:1.6rem; }
+    .qr-frame {
+      width:160px; height:160px; border-radius:20px; background:#fff;
+      border:3px solid rgba(201,184,240,.35); box-shadow:0 6px 24px rgba(160,100,180,.16);
+      display:flex; align-items:center; justify-content:center;
+      position:relative; overflow:hidden; padding:10px;
+    }
+    .qr-frame.loading::after {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.65) 50%,transparent 70%);
+      animation:shimmer 1.5s ease-in-out infinite;
+    }
+    @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+    #qrCodeContainer canvas, #qrCodeContainer img { width:138px !important; height:138px !important; display:block; border-radius:8px; }
+    .qr-placeholder { display:flex; flex-direction:column; align-items:center; gap:.5rem; }
+    .qr-placeholder-grid { display:grid; grid-template-columns:repeat(5,12px); gap:3px; }
+    .qr-placeholder-grid div { width:12px; height:12px; border-radius:2px; background:rgba(160,112,208,.25); animation:qrPulse 1.4s ease-in-out infinite; }
+    .qr-placeholder-grid div:nth-child(odd)  { animation-delay:0s; }
+    .qr-placeholder-grid div:nth-child(even) { animation-delay:.3s; }
+    @keyframes qrPulse { 0%,100%{opacity:.25} 50%{opacity:.7} }
+    .qr-placeholder-text { font-size:.68rem; color:var(--light); font-weight:600; }
+    .qr-scan-label { font-size:.84rem; font-weight:700; color:var(--dark); text-align:center; }
+    .qr-scan-note { font-size:.74rem; color:var(--mid); text-align:center; background:linear-gradient(135deg,rgba(253,232,240,.5),rgba(232,234,255,.5)); border:1px solid var(--glass-b); border-radius:50px; padding:.28rem .9rem; }
+    .status-pill { display:inline-flex; align-items:center; gap:.4rem; background:linear-gradient(135deg,rgba(170,236,220,.5),rgba(168,216,240,.5)); border:1px solid rgba(170,236,220,.6); border-radius:50px; padding:.3rem .9rem; font-size:.76rem; font-weight:700; color:#2a8070; }
+    .status-dot { width:7px; height:7px; border-radius:50%; background:#40c098; animation:pulse 2s infinite; }
+    .map-section { width:100%; max-width:620px; animation:fadeUp .7s .25s ease both; }
+    .map-card { background:var(--glass); backdrop-filter:blur(16px); border:1.5px solid var(--glass-b); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); }
+    #venue-map { height:260px; width:100%; display:block; background:#e8eaff; z-index:1; }
+    .leaflet-container { font-family:'DM Sans',sans-serif !important; }
+    .leaflet-popup-content-wrapper { border-radius:14px !important; box-shadow:0 8px 24px rgba(160,100,180,.2) !important; border:1px solid rgba(201,184,240,.3) !important; font-family:'DM Sans',sans-serif !important; }
+    .leaflet-popup-content { font-size:.82rem !important; margin:.65rem 1rem !important; }
+    .map-footer { padding:1rem 1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.8rem; border-top:1px solid rgba(201,184,240,.25); background:rgba(255,255,255,.4); }
+    .map-addr { font-size:.85rem; color:var(--mid); line-height:1.5; }
+    .map-addr strong { display:block; font-size:.92rem; color:var(--dark); margin-bottom:.1rem; }
+    .map-directions { display:inline-flex; align-items:center; gap:.35rem; font-size:.8rem; font-weight:600; color:#a070d0; background:linear-gradient(135deg,rgba(253,232,240,.5),rgba(232,234,255,.5)); border:1px solid rgba(201,184,240,.3); border-radius:50px; padding:.38rem .9rem; text-decoration:none; cursor:pointer; transition:all .2s; }
+    .map-directions:hover { background:linear-gradient(135deg,rgba(253,232,240,.8),rgba(232,234,255,.8)); transform:translateY(-1px); }
+    .map-loading { height:260px; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(135deg,#e8eaff 0%,#d0e8f8 50%,#e0f7f4 100%); gap:.7rem; }
+    .map-loading-pin { width:44px; height:44px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); background:linear-gradient(135deg,#e07090,#a070d0); box-shadow:0 4px 14px rgba(160,80,180,.35); display:flex; align-items:center; justify-content:center; animation:pinBounce 1.4s ease-in-out infinite; }
+    .map-loading-pin .pin-core { transform:rotate(45deg); width:16px; height:16px; border-radius:50%; background:#fff; opacity:.9; }
+    @keyframes pinBounce { 0%,100%{transform:rotate(-45deg) translateY(0)} 50%{transform:rotate(-45deg) translateY(-7px)} }
+    .map-loading-text { font-size:.82rem; font-weight:600; color:var(--mid); background:rgba(255,255,255,.8); padding:.3rem .9rem; border-radius:50px; border:1px solid var(--glass-b); }
+    .action-row { display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; width:100%; max-width:620px; animation:fadeUp .7s .35s ease both; }
+    .action-row .btn { flex:1; min-width:180px; justify-content:center; padding:.88rem 1.8rem; }
+    .btn-download { background:linear-gradient(135deg,#e07090,#a070d0); color:#fff; box-shadow:0 6px 24px rgba(160,80,180,.32); position:relative; }
+    .btn-download::before { content:''; position:absolute; inset:-3px; border-radius:53px; background:linear-gradient(135deg,#e07090,#a070d0); opacity:0; z-index:-1; animation:ringPulse 2.5s ease-out infinite; }
+    @keyframes ringPulse { 0%{transform:scale(1);opacity:.5} 100%{transform:scale(1.10);opacity:0} }
+    .support-note { text-align:center; font-size:.78rem; color:var(--light); line-height:1.7; max-width:420px; animation:fadeUp .7s .4s ease both; }
+    .support-note a { color:#a070d0; text-decoration:none; }
+    .support-note a:hover { text-decoration:underline; }
+    footer { position:relative; z-index:1; background:rgba(255,248,245,.72); backdrop-filter:blur(16px); border-top:1px solid var(--glass-b); padding:2rem 5%; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; }
+    .footer-logo { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:900; background:linear-gradient(135deg,#e07090,#a070d0,#50b8d8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; text-decoration:none; }
+    .footer-copy { font-size:.76rem; color:var(--light); }
+    .footer-links { display:flex; gap:1.4rem; }
+    .footer-links a { font-size:.78rem; color:var(--mid); text-decoration:none; transition:color .2s; }
+    .footer-links a:hover { color:var(--dark); }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+    .toast { position:fixed; bottom:2rem; right:2rem; z-index:999; background:var(--glass); backdrop-filter:blur(20px); border:1.5px solid var(--glass-b); border-radius:16px; padding:.9rem 1.4rem; box-shadow:0 10px 36px rgba(160,100,180,.22); display:flex; align-items:center; gap:.7rem; transform:translateY(110px); opacity:0; transition:all .42s cubic-bezier(.34,1.56,.64,1); pointer-events:none; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast-ico   { font-size:1.3rem; }
+    .toast-title { font-size:.88rem; font-weight:700; color:var(--dark); }
+    .toast-msg   { font-size:.74rem; color:var(--mid); }
+    @media (max-width:640px) {
+      .meta-grid { grid-template-columns:1fr; }
+      .ticket-header { padding:1.8rem 1.5rem 1.6rem; }
+      .ticket-body   { padding:0 1.5rem 1.8rem; }
+      .attendee-strip { flex-wrap:wrap; }
+      .att-id { margin-left:0; }
+      .ticket-type-badge { position:static; margin-top:1rem; display:inline-block; }
+      .action-row .btn { min-width:100%; }
+      nav .nav-center { display:none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+<div class="blob b3"></div>
+
+<nav>
+  <a href="/home/" class="nav-logo">Eventra</a>
+  <div class="nav-center">
+    <span class="page-label">🎟 My Ticket</span>
+  </div>
+  <div class="nav-actions">
+    <a href="/dashboard/" class="btn btn-ghost">← Dashboard</a>
+  </div>
+</nav>
+
+<div class="page-wrap">
+
+  <div class="page-heading">
+    <div class="badge"><span class="badge-dot"></span> Booking Confirmed</div>
+    <h1>Your <span class="acc">Event Ticket</span> ✦</h1>
+    <p>Show this ticket at the venue entrance. Keep it handy!</p>
+  </div>
+
+  <div class="ticket-wrapper">
+    <div class="ticket">
+
+      <div class="ticket-header">
+        <div class="ticket-type-badge">
+          <div class="tb-label">Ticket Type</div>
+          <div class="tb-type" id="ticketType">General</div>
+        </div>
+        <div class="ticket-event-cat" id="ticketCat">🤖 Tech · Workshop</div>
+        <div class="ticket-event-title" id="ticketTitle">AI Tech Summit 2026</div>
+        <div class="ticket-event-subtitle">Presented by Eventra · India's Smartest Event Platform</div>
+      </div>
+
+      <div class="ticket-body">
+
+        <div class="attendee-strip">
+          <div class="att-avatar" id="attAvatar">A</div>
+          <div class="att-info">
+            <div class="att-name" id="attName">Attendee</div>
+            <div class="att-label">Registered Attendee</div>
+          </div>
+          <div class="att-id" id="ticketId">EVT-2026-001</div>
+        </div>
+
+        <div class="meta-grid">
+          <div class="meta-item">
+            <div class="meta-ico">📅</div>
+            <div><div class="meta-label">Date</div><div class="meta-val" id="metaDate">22 March 2026</div></div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-ico">⏰</div>
+            <div><div class="meta-label">Time</div><div class="meta-val" id="metaTime">10:00 AM – 5:00 PM</div></div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-ico">📍</div>
+            <div><div class="meta-label">Location</div><div class="meta-val" id="metaLocation">IIIT Bangalore, Karnataka</div></div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-ico">👥</div>
+            <div><div class="meta-label">Organiser</div><div class="meta-val" id="metaOrg">AI Collective India</div></div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem;flex-wrap:wrap;gap:.8rem;">
+          <div class="status-pill"><span class="status-dot"></span> Confirmed</div>
+          <div id="amountDisplay" style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,#e07090,#a070d0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+            ₹799 <span style="font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:400;-webkit-text-fill-color:var(--light);">paid</span>
+          </div>
+        </div>
+
+        <div class="perforation">
+          <div class="perf-notch"></div>
+          <div class="perf-line"></div>
+          <div class="perf-label">✂ Scan Below for Entry</div>
+          <div class="perf-line"></div>
+          <div class="perf-notch"></div>
+        </div>
+
+        <!-- ✅ REAL QR CODE -->
+        <div class="qr-section">
+          <div class="qr-frame loading" id="qrFrame">
+            <div class="qr-placeholder" id="qrPlaceholder">
+              <div class="qr-placeholder-grid">
+                <div></div><div></div><div></div><div></div><div></div>
+                <div></div><div></div><div></div><div></div><div></div>
+                <div></div><div></div><div></div><div></div><div></div>
+                <div></div><div></div><div></div><div></div><div></div>
+                <div></div><div></div><div></div><div></div><div></div>
+              </div>
+              <div class="qr-placeholder-text">Generating QR…</div>
+            </div>
+            <div id="qrCodeContainer" style="display:none;"></div>
+          </div>
+          <div class="qr-scan-label">📲 Scan for Entry</div>
+          <div class="qr-scan-note" id="qrBookingNote">Booking ID: EVT-2026-001</div>
+        </div>
+
+        <div style="background:linear-gradient(135deg,rgba(58,42,62,.06),rgba(160,112,208,.06));border:1px dashed rgba(201,184,240,.4);border-radius:14px;padding:.9rem 1.2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;">
+          <div>
+            <div style="font-size:.7rem;color:var(--light);font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.2rem;">Booking Reference</div>
+            <div style="font-family:'DM Mono',monospace;font-size:1.05rem;font-weight:500;color:#a070d0;letter-spacing:.08em;" id="bookingRef">EVT-2026-001</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:.7rem;color:var(--light);font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.2rem;">Amount Paid</div>
+            <div style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:900;background:linear-gradient(135deg,#e07090,#a070d0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;" id="amountPaid">₹799</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP SECTION -->
+  <div class="map-section">
+    <div class="map-card">
+      <div class="map-loading" id="mapLoading">
+        <div class="map-loading-pin"><div class="pin-core"></div></div>
+        <div class="map-loading-text">Loading venue map…</div>
+      </div>
+      <div id="venue-map" style="display:none;"></div>
+      <div class="map-footer">
+        <div class="map-addr">
+          <strong id="mapVenueName">IIIT Bangalore</strong>
+          <span id="mapVenueAddr">26/C, Electronics City Phase 1, Bengaluru – 560100</span>
+        </div>
+        <a id="directionsBtn" class="map-directions" target="_blank" rel="noopener noreferrer">🧭 Get Directions</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-row">
+    <button class="btn btn-download" onclick="handleDownload()">⬇ Download Ticket</button>
+    <a href="/events/" class="btn btn-outline">🗓 Browse More Events</a>
+  </div>
+
+  <div class="support-note">
+    Having trouble? Contact us at <a href="#">support@eventra.in</a> or visit the <a href="#">Help Centre</a>.<br/>
+    Your ticket has also been sent to your registered email address.
+  </div>
+
+</div>
+
+<footer>
+  <a href="/home/" class="footer-logo">Eventra</a>
+  <p class="footer-copy">© 2026 Eventra · All rights reserved.</p>
+  <div class="footer-links">
+    <a href="#">Help</a><a href="#">Privacy</a><a href="#">Terms</a>
+  </div>
+</footer>
+
+<div class="toast" id="toast">
+  <div class="toast-ico" id="tIco">✨</div>
+  <div>
+    <div class="toast-title" id="tTitle">—</div>
+    <div class="toast-msg"   id="tMsg">—</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════════════════
+//  ticket.html — Dynamic Ticket Script
+//
+//  Data source: URL parameters set by event-details.html
+//  Required params: id, name, title, date, time, location,
+//                   organiser, type, price, category
+//
+//  QR: loaded as <img> from Django endpoint /qr/<ticketId>/
+// ══════════════════════════════════════════════════════════════
+
+const DJANGO = 'http://127.0.0.1:8000';   // Django server base URL
+
+// ── VENUE COORDS for the map ──────────────────────────────────
+const VENUE_COORDS = {
+  "IIIT Bangalore":          { lat:12.8448, lng:77.6638 },
+  "IIT Bombay":              { lat:19.1334, lng:72.9133 },
+  "IIT Delhi":               { lat:28.5459, lng:77.1926 },
+  "IISc Bangalore":          { lat:13.0213, lng:77.5672 },
+  "Jawaharlal Nehru Stadium":{ lat:28.5665, lng:77.2373 },
+  "Pragati Maidan":          { lat:28.6183, lng:77.2434 },
+  "NSCI Dome Mumbai":        { lat:19.0653, lng:72.8677 },
+  "Nehru Centre":            { lat:18.9940, lng:72.8226 },
+  "T-Hub":                   { lat:17.4267, lng:78.3481 },
+  "HICC":                    { lat:17.4399, lng:78.3489 },
+  "WeWork Galaxy":           { lat:12.9642, lng:77.5972 },
+  "Blue Frog":               { lat:19.0100, lng:72.8275 },
+  "JLN Stadium":             { lat:28.5665, lng:77.2373 },
+  "DakshinaChitra":          { lat:12.8013, lng:80.2206 },
+  "Cubbon Park":             { lat:12.9763, lng:77.5929 },
+  "Design Hub":              { lat:19.0596, lng:72.8295 },
+  "default":                 { lat:12.8448, lng:77.6638 }
+};
+
+// ── STEP 1: Read URL parameters (no fallback to demo data) ────
+function readParams() {
+  const p = new URLSearchParams(window.location.search);
+  return {
+    ticketId:  p.get('id')        || '',
+    name:      p.get('name')      || '',
+    event:     p.get('title')     || '',
+    date:      p.get('date')      || '',
+    time:      p.get('time')      || '',
+    location:  p.get('location')  || '',
+    organiser: p.get('organiser') || '',
+    ticket:    p.get('type')      || 'General',
+    price:     p.get('price')     || '',
+    category:  p.get('category')  || '',
+    total:     p.get('total')     || '',
+  };
+}
+
+// ── STEP 2: Fill every element on the ticket ──────────────────
+function populateTicket(d) {
+  const first = (d.name || '?').trim().charAt(0).toUpperCase();
+
+  document.getElementById('attAvatar').textContent    = first;
+  document.getElementById('attName').textContent      = d.name;
+  document.getElementById('ticketTitle').textContent  = d.event;
+  document.getElementById('ticketType').textContent   = d.ticket;
+  document.getElementById('ticketId').textContent     = d.ticketId;
+  document.getElementById('bookingRef').textContent   = d.ticketId;
+  document.getElementById('qrBookingNote').textContent= 'Booking ID: ' + d.ticketId;
+  document.getElementById('metaDate').textContent     = d.date     || '—';
+  document.getElementById('metaTime').textContent     = d.time     || '—';
+  document.getElementById('metaLocation').textContent = d.location || '—';
+  document.getElementById('metaOrg').textContent      = d.organiser|| '—';
+  document.getElementById('mapVenueName').textContent = (d.location || '').split(',')[0].trim() || '—';
+  document.getElementById('mapVenueAddr').textContent = d.location || '—';
+
+  // Category badge
+  const catEl = document.getElementById('ticketCat');
+  if (catEl) catEl.textContent = d.category ? '🎟 ' + d.category : '🎟 Event';
+
+  // Price / amount
+  const priceNum = parseFloat(d.price);
+  const priceStr = (!isNaN(priceNum) && priceNum > 0)
+    ? '₹' + priceNum.toLocaleString('en-IN')
+    : (d.total || 'Free');
+  document.getElementById('amountPaid').textContent = priceStr;
+  const amtDisplay = document.getElementById('amountDisplay');
+  if (amtDisplay) amtDisplay.innerHTML =
+    `${priceStr} <span style="font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:400;-webkit-text-fill-color:var(--light);">paid</span>`;
+
+  document.title = 'Eventra – ' + (d.event || 'My Ticket');
+}
+
+// ── STEP 3: Load QR from Django /qr/<ticketId>/ ───────────────
+//  The Django view returns a PNG image directly.
+//  We create an <img> and point it at that URL.
+function loadQR(ticketId) {
+  const frame       = document.getElementById('qrFrame');
+  const placeholder = document.getElementById('qrPlaceholder');
+  const container   = document.getElementById('qrCodeContainer');
+
+  if (!ticketId) {
+    placeholder.innerHTML = '<div style="font-size:.72rem;color:#e07090;font-weight:700;text-align:center;">No Ticket ID</div>';
+    frame.classList.remove('loading');
+    return;
+  }
+
+  // Create img pointing at Django QR endpoint
+  const img = new Image();
+  img.alt   = 'QR Code – ' + ticketId;
+  img.style.cssText = 'width:138px;height:138px;border-radius:8px;display:block;opacity:0;transition:opacity .4s;';
+
+  img.onload = function() {
+    placeholder.style.display = 'none';
+    container.style.display   = 'block';
+    container.appendChild(img);
+    frame.classList.remove('loading');
+    requestAnimationFrame(() => { img.style.opacity = '1'; });
+    showToast('✅', 'QR Code Ready', 'Show this at the venue entrance.');
+  };
+
+  img.onerror = function() {
+    // Django offline — fall back to qrcodejs client-side QR
+    console.warn('Django QR endpoint unreachable, falling back to client-side QR');
+    generateClientQR(ticketId, frame, placeholder, container);
+  };
+
+  // This is the key line — hit the Django endpoint
+  img.src = DJANGO + '/qr/' + ticketId + '/';
+}
+
+// ── Fallback: client-side QR via qrcodejs (if Django is down) ─
+function generateClientQR(ticketId, frame, placeholder, container) {
+  const verifyURL = DJANGO + '/verify/' + ticketId + '/';
+  try {
+    container.innerHTML = '';
+    new QRCode(container, {
+      text: verifyURL, width: 138, height: 138,
+      colorDark: '#3a2a3e', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+    placeholder.style.display = 'none';
+    container.style.display   = 'block';
+    frame.classList.remove('loading');
+    showToast('⚠️', 'Offline QR', 'Django unreachable — showing local QR.');
+  } catch(err) {
+    placeholder.innerHTML = '<div style="font-size:.72rem;font-weight:700;color:#a070d0;text-align:center;padding:8px;">🎟<br/>' + ticketId + '</div>';
+    frame.classList.remove('loading');
+  }
+}
+
+// ── STEP 4: Map ───────────────────────────────────────────────
+function initMap(d) {
+  const venueName = (d.location || '').split(',')[0].trim();
+  let coord = VENUE_COORDS[venueName];
+  if (!coord) {
+    const key = Object.keys(VENUE_COORDS).find(k =>
+      venueName.toLowerCase().includes(k.toLowerCase()) ||
+      k.toLowerCase().includes(venueName.toLowerCase())
+    );
+    coord = key ? VENUE_COORDS[key] : VENUE_COORDS['default'];
+  }
+
+  const mapEl  = document.getElementById('venue-map');
+  const loadEl = document.getElementById('mapLoading');
+  mapEl.style.display  = 'block';
+  mapEl.style.height   = '260px';
+  loadEl.style.display = 'none';
+
+  const map = L.map('venue-map', { center:[coord.lat,coord.lng], zoom:15, scrollWheelZoom:false });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
+    maxZoom:19
+  }).addTo(map);
+
+  const pinIcon = L.divIcon({
+    className: '',
+    html: `<div style="width:40px;height:40px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:linear-gradient(135deg,#e07090,#a070d0);box-shadow:0 4px 16px rgba(160,80,180,.5);display:flex;align-items:center;justify-content:center;"><div style="transform:rotate(45deg);width:15px;height:15px;background:#fff;border-radius:50%;opacity:.92;"></div></div>`,
+    iconSize:[40,40], iconAnchor:[20,40], popupAnchor:[0,-44]
+  });
+
+  L.marker([coord.lat, coord.lng], { icon: pinIcon }).addTo(map)
+    .bindPopup(`<div style="font-family:'DM Sans',sans-serif;min-width:160px;"><strong style="font-size:.88rem;color:#3a2a3e;display:block;margin-bottom:.2rem;">${venueName}</strong><span style="font-size:.75rem;color:#7a6080;">${d.location}</span></div>`, { maxWidth:240 })
+    .openPopup();
+
+  setTimeout(() => map.invalidateSize(), 200);
+  document.getElementById('directionsBtn').href =
+    `https://www.google.com/maps/dir/?api=1&destination=${coord.lat},${coord.lng}`;
+}
+
+function handleDownload() {
+  showToast('⬇️', 'Opening Print Dialog…', 'Choose "Save as PDF" to download your ticket.');
+  setTimeout(() => window.print(), 600);
+}
+
+let toastTimer;
+function showToast(ico, title, msg) {
+  document.getElementById('tIco').textContent   = ico;
+  document.getElementById('tTitle').textContent = title;
+  document.getElementById('tMsg').textContent   = msg;
+  const t = document.getElementById('toast');
+  clearTimeout(toastTimer);
+  t.classList.add('show');
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── BOOT ──────────────────────────────────────────────────────
+const D = readParams();
+populateTicket(D);
+loadQR(D.ticketId);             // ← hits Django /qr/<ticketId>/
+if (typeof L !== 'undefined') {
+  initMap(D);
+} else {
+  window.addEventListener('load', () => initMap(D));
+}
+</script>
+</body>
+</html>

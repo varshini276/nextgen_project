@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>eventra – Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    :root {
+      --rose:#f4a7b9; --peach:#f9c784; --lavender:#c9b8f0;
+      --sky:#a8d8f0; --mint:#aaecdc;
+      --glass-bg:rgba(255,255,255,0.55);
+      --glass-border:rgba(255,255,255,0.75);
+      --shadow:0 8px 40px rgba(180,120,140,0.18);
+      --text-dark:#3a2a3e; --text-mid:#7a6080; --text-light:#b8a8c0;
+      --radius:20px; --nav-h:72px; --sidebar-w:250px;
+    }
+    html { scroll-behavior:smooth; }
+    body {
+      font-family:'DM Sans',sans-serif;
+      background:linear-gradient(135deg,#fde8f0 0%,#fef3e2 30%,#e8eaff 65%,#e0f7f4 100%);
+      min-height:100vh; color:var(--text-dark); overflow-x:hidden;
+    }
+    .blob { position:fixed; border-radius:50%; filter:blur(80px); opacity:.35; pointer-events:none; z-index:0; }
+    .blob-1 { width:420px; height:420px; background:var(--rose);     top:-100px; left:-100px; }
+    .blob-2 { width:340px; height:340px; background:var(--lavender); top:45%;   right:-80px; }
+    .blob-3 { width:280px; height:280px; background:var(--mint);     bottom:-60px; left:35%; }
+
+    .sidebar {
+      position:fixed; top:0; left:0; bottom:0; z-index:200;
+      width:var(--sidebar-w);
+      background:rgba(58,42,62,0.97);
+      backdrop-filter:blur(20px);
+      display:flex; flex-direction:column; padding:0 0 2rem;
+      box-shadow:4px 0 32px rgba(58,42,62,.3);
+    }
+    .sidebar-logo {
+      font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:900;
+      background:linear-gradient(135deg,#f4a7b9,#c9b8f0,#a8d8f0);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+      padding:1.6rem 1.5rem 1rem; border-bottom:1px solid rgba(255,255,255,.08);
+      text-decoration:none; display:flex; align-items:center; gap:.6rem;
+    }
+    .sidebar-logo .admin-badge {
+      font-size:.6rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+      border:1px solid rgba(224,112,144,.4); border-radius:4px; padding:.1rem .4rem;
+    }
+    .sidebar-section { padding:.9rem 1.2rem .3rem; font-size:.65rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.3); }
+    .sidebar-nav { list-style:none; padding:0 .8rem; }
+    .sidebar-nav li { margin-bottom:.15rem; }
+    .sidebar-nav a { display:flex; align-items:center; gap:.75rem; padding:.65rem .9rem; border-radius:12px; text-decoration:none; font-size:.86rem; font-weight:500; color:rgba(255,255,255,.55); transition:all .22s; }
+    .sidebar-nav a:hover { background:rgba(255,255,255,.08); color:rgba(255,255,255,.9); }
+    .sidebar-nav a.active { background:linear-gradient(135deg,rgba(224,112,144,.25),rgba(160,112,208,.25)); color:#fff; font-weight:700; border:1px solid rgba(201,184,240,.2); }
+    .nav-icon { font-size:.95rem; width:20px; text-align:center; }
+    .nav-badge { margin-left:auto; font-size:.65rem; font-weight:800; background:linear-gradient(135deg,#e07090,#a070d0); color:#fff; border-radius:50px; padding:.1rem .5rem; min-width:20px; text-align:center; }
+    .nav-badge.green { background:linear-gradient(135deg,var(--mint),var(--sky)); color:#3a2a3e; }
+    .sidebar-bottom { margin-top:auto; padding:0 1rem; }
+    .sidebar-user { display:flex; align-items:center; gap:.8rem; padding:.9rem; border-radius:14px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1); }
+    .su-av { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--rose),var(--lavender)); display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:800; color:#fff; flex-shrink:0; }
+    .su-name { font-size:.84rem; font-weight:600; color:#fff; }
+    .su-role { font-size:.7rem; color:rgba(255,255,255,.4); }
+
+    nav {
+      position:fixed; top:0; left:var(--sidebar-w); right:0; z-index:100;
+      height:var(--nav-h); display:flex; align-items:center; justify-content:space-between;
+      padding:0 2.5rem; background:rgba(255,248,245,0.8); backdrop-filter:blur(18px);
+      border-bottom:1px solid var(--glass-border); box-shadow:0 2px 24px rgba(200,140,160,.08);
+    }
+    .nav-left h2 { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:800; }
+    .nav-left h2 span { background:linear-gradient(135deg,#e07090,#a070d0); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .nav-left p { font-size:.75rem; color:var(--text-light); margin-top:.1rem; }
+    .nav-right { display:flex; align-items:center; gap:.8rem; }
+    .nav-search { display:flex; align-items:center; gap:.5rem; background:var(--glass-bg); border:1.5px solid var(--glass-border); border-radius:50px; padding:.42rem 1rem; }
+    .nav-search input { border:none; background:transparent; outline:none; font-family:'DM Sans',sans-serif; font-size:.84rem; color:var(--text-dark); width:180px; }
+    .nav-search input::placeholder { color:var(--text-light); }
+    .icon-btn { width:38px; height:38px; border-radius:50%; background:var(--glass-bg); border:1.5px solid var(--glass-border); display:flex; align-items:center; justify-content:center; font-size:1rem; cursor:pointer; position:relative; transition:all .2s; }
+    .icon-btn:hover { background:linear-gradient(135deg,#fde8f0,#e8eaff); }
+    .notif-dot { position:absolute; top:6px; right:6px; width:8px; height:8px; border-radius:50%; background:#e07090; border:2px solid #fff8f5; }
+    .su-av-sm { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--rose),var(--lavender)); display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:800; color:#fff; cursor:pointer; border:2px solid var(--glass-border); }
+
+    .main { margin-left:var(--sidebar-w); padding:calc(var(--nav-h) + 2rem) 2.5rem 4rem; position:relative; z-index:1; }
+
+    .alert-banner { background:linear-gradient(135deg,rgba(224,112,144,.15),rgba(160,112,208,.15)); border:1.5px solid rgba(201,184,240,.4); border-radius:14px; padding:.9rem 1.3rem; display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem; flex-wrap:wrap; gap:.8rem; }
+    .alert-left { display:flex; align-items:center; gap:.8rem; font-size:.85rem; }
+    .alert-icon { font-size:1.2rem; }
+    .alert-close { background:none; border:none; cursor:pointer; color:var(--text-light); font-size:1.1rem; }
+
+    .btn { display:inline-flex; align-items:center; gap:.5rem; padding:.6rem 1.4rem; border:none; cursor:pointer; border-radius:50px; font-family:'DM Sans',sans-serif; font-size:.86rem; font-weight:600; transition:transform .2s, filter .2s; text-decoration:none; }
+    .btn:hover { transform:translateY(-2px); filter:brightness(1.07); }
+    .btn-primary { background:linear-gradient(135deg,#e07090,#a070d0); color:#fff; box-shadow:0 4px 20px rgba(160,80,180,.3); }
+    .btn-ghost   { background:var(--glass-bg); backdrop-filter:blur(10px); border:1.5px solid var(--glass-border); color:var(--text-dark); }
+    .btn-danger  { background:linear-gradient(135deg,#e07090,#c05060); color:#fff; }
+    .btn-success { background:linear-gradient(135deg,var(--mint),var(--sky)); color:#3a2a3e; }
+    .btn-sm { padding:.38rem .9rem; font-size:.75rem; }
+
+    .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1.2rem; margin-bottom:2rem; }
+    .stat-card { background:var(--glass-bg); backdrop-filter:blur(16px); border:1.5px solid var(--glass-border); border-radius:var(--radius); padding:1.4rem; box-shadow:var(--shadow); transition:transform .3s; position:relative; overflow:hidden; }
+    .stat-card:hover { transform:translateY(-4px); }
+    .stat-card::after { content:''; position:absolute; top:-20px; right:-20px; width:80px; height:80px; border-radius:50%; opacity:.12; }
+    .sc-1::after{background:var(--rose);} .sc-2::after{background:var(--lavender);} .sc-3::after{background:var(--mint);} .sc-4::after{background:var(--peach);} .sc-5::after{background:var(--sky);} .sc-6::after{background:var(--rose);}
+    .stat-icon { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; margin-bottom:.9rem; }
+    .si-1{background:linear-gradient(135deg,#fde8f0,#f9c8d8);} .si-2{background:linear-gradient(135deg,#ede8ff,#d8c8f8);} .si-3{background:linear-gradient(135deg,#e0fff8,#c0ece0);} .si-4{background:linear-gradient(135deg,#fff3e0,#f9e0c0);} .si-5{background:linear-gradient(135deg,#e0f4ff,#c0e4f8);} .si-6{background:linear-gradient(135deg,#fde8f0,#f9c8d8);}
+    .stat-num { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:900; line-height:1; background:linear-gradient(135deg,#e07090,#a070d0); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:.25rem; }
+    .stat-label { font-size:.78rem; color:var(--text-mid); }
+    .stat-delta { display:inline-flex; align-items:center; gap:.2rem; font-size:.7rem; font-weight:700; margin-top:.35rem; padding:.12rem .45rem; border-radius:50px; }
+    .up   { background:#e0fff8; color:#30a070; }
+    .down { background:#fde8f0; color:#e07090; }
+
+    .panel { background:var(--glass-bg); backdrop-filter:blur(16px); border:1.5px solid var(--glass-border); border-radius:var(--radius); padding:1.5rem; box-shadow:var(--shadow); margin-bottom:1.5rem; }
+    .panel-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.2rem; flex-wrap:wrap; gap:.6rem; }
+    .panel-title  { font-family:'Playfair Display',serif; font-size:1rem; font-weight:800; display:flex; align-items:center; gap:.45rem; }
+    .panel-actions { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-size:.82rem; }
+    thead th { text-align:left; padding:.65rem 1rem; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--text-light); border-bottom:1.5px solid rgba(200,180,220,.2); white-space:nowrap; cursor:pointer; user-select:none; }
+    thead th:hover { color:var(--text-dark); }
+    tbody tr { border-bottom:1px solid rgba(200,180,220,.1); transition:background .2s; }
+    tbody tr:hover { background:rgba(255,255,255,.45); }
+    tbody td { padding:.75rem 1rem; color:var(--text-mid); vertical-align:middle; }
+    tbody td:first-child { color:var(--text-dark); font-weight:600; }
+
+    .badge { display:inline-block; padding:.2rem .65rem; border-radius:50px; font-size:.68rem; font-weight:700; }
+    .b-green  { background:#e0fff8; color:#30a070; }
+    .b-orange { background:#fff3e0; color:#d09040; }
+    .b-red    { background:#fde8f0; color:#e07090; }
+    .b-blue   { background:#e0f4ff; color:#4090d0; }
+    .b-purple { background:#ede8ff; color:#a070d0; }
+    .b-grey   { background:#f0f0f4; color:#9090a0; }
+
+    .mini-bar  { height:5px; border-radius:5px; background:rgba(200,180,220,.2); overflow:hidden; margin-top:.3rem; min-width:60px; }
+    .mini-fill { height:100%; border-radius:5px; background:linear-gradient(90deg,var(--rose),var(--lavender)); }
+
+    .av-sm { width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:.65rem; font-weight:800; color:#fff; margin-right:.4rem; }
+    .av1{background:linear-gradient(135deg,var(--rose),var(--peach));}
+    .av2{background:linear-gradient(135deg,var(--lavender),var(--sky));}
+    .av3{background:linear-gradient(135deg,var(--mint),var(--sky));}
+    .av4{background:linear-gradient(135deg,var(--peach),var(--rose));}
+    .av5{background:linear-gradient(135deg,var(--sky),var(--mint));}
+
+    .filter-row { display:flex; gap:.7rem; align-items:center; flex-wrap:wrap; margin-bottom:1rem; }
+    .filter-input { padding:.42rem 1rem; border-radius:50px; border:1.5px solid rgba(200,180,220,.3); background:var(--glass-bg); font-family:'DM Sans',sans-serif; font-size:.82rem; color:var(--text-dark); outline:none; min-width:180px; }
+    .filter-input:focus { border-color:var(--lavender); }
+    .filter-select { padding:.42rem 1rem; border-radius:50px; border:1.5px solid rgba(200,180,220,.3); background:var(--glass-bg); font-family:'DM Sans',sans-serif; font-size:.82rem; color:var(--text-mid); outline:none; cursor:pointer; appearance:none; }
+
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem; }
+
+    .act-item { display:flex; gap:.8rem; align-items:flex-start; margin-bottom:.9rem; }
+    .act-icon { width:34px; height:34px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:.9rem; }
+    .ai-rose{background:linear-gradient(135deg,#fde8f0,#f9c8d8);}
+    .ai-lav{background:linear-gradient(135deg,#ede8ff,#d8c8f8);}
+    .ai-mint{background:linear-gradient(135deg,#e0fff8,#c0ece0);}
+    .ai-peach{background:linear-gradient(135deg,#fff3e0,#f9e0c0);}
+    .ai-red{background:linear-gradient(135deg,#fde8f0,#f8c8c8);}
+    .act-body { font-size:.81rem; color:var(--text-mid); line-height:1.5; }
+    .act-body strong { color:var(--text-dark); }
+    .act-time { font-size:.68rem; color:var(--text-light); margin-top:.12rem; }
+
+    .health-item { display:flex; align-items:center; justify-content:space-between; padding:.7rem 0; border-bottom:1px solid rgba(200,180,220,.12); }
+    .health-item:last-child { border-bottom:none; }
+    .health-label { font-size:.83rem; color:var(--text-mid); display:flex; align-items:center; gap:.5rem; }
+    .health-val   { font-size:.83rem; font-weight:700; }
+    .h-green { color:#30a070; } .h-orange { color:#d09040; } .h-red { color:#e07090; }
+
+    .modal-overlay { position:fixed; inset:0; z-index:500; background:rgba(58,42,62,.6); backdrop-filter:blur(8px); display:none; align-items:center; justify-content:center; padding:1.5rem; }
+    .modal-overlay.show { display:flex; animation:fadeIn .25s ease; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    .modal { background:linear-gradient(135deg,rgba(253,232,240,.97),rgba(232,234,255,.97)); backdrop-filter:blur(20px); border:1.5px solid var(--glass-border); border-radius:24px; padding:2rem; max-width:480px; width:100%; box-shadow:0 24px 64px rgba(58,42,62,.3); animation:slideUp .3s cubic-bezier(.34,1.56,.64,1) both; }
+    @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    .modal-title { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:800; margin-bottom:1.2rem; display:flex; align-items:center; gap:.5rem; justify-content:space-between; }
+    .modal-close { background:none; border:none; cursor:pointer; font-size:1.2rem; color:var(--text-light); }
+    .modal label { display:block; font-size:.8rem; font-weight:600; color:var(--text-mid); margin-bottom:.4rem; margin-top:.9rem; }
+    .modal input, .modal select, .modal textarea { width:100%; padding:.75rem 1rem; background:rgba(255,255,255,.7); border:1.5px solid rgba(200,180,220,.35); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:.88rem; color:var(--text-dark); outline:none; }
+    .modal input:focus, .modal select:focus, .modal textarea:focus { border-color:var(--lavender); }
+    .modal-actions { display:flex; gap:.8rem; margin-top:1.5rem; justify-content:flex-end; }
+
+    .toast { position:fixed; bottom:2rem; right:2rem; z-index:999; background:rgba(58,42,62,.95); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:1rem 1.5rem; box-shadow:0 12px 40px rgba(58,42,62,.4); display:flex; align-items:center; gap:.8rem; transform:translateY(100px); opacity:0; transition:all .4s cubic-bezier(.34,1.56,.64,1); pointer-events:none; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast-icon { font-size:1.3rem; }
+    .toast-text h4 { font-size:.88rem; font-weight:700; color:#fff; }
+    .toast-text p  { font-size:.75rem; color:rgba(255,255,255,.6); }
+
+    .cb-wrap { display:flex; align-items:center; gap:.5rem; cursor:pointer; }
+    .cb-wrap input { width:15px; height:15px; accent-color:#a070d0; cursor:pointer; }
+
+    .reveal { opacity:0; transform:translateY(16px); transition:opacity .5s ease, transform .5s ease; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+
+    footer { margin-left:var(--sidebar-w); position:relative; z-index:1; background:rgba(255,248,245,.72); backdrop-filter:blur(16px); border-top:1px solid var(--glass-border); padding:1.5rem 2.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; }
+    footer p { font-size:.75rem; color:var(--text-light); }
+
+    @media(max-width:900px) {
+      :root { --sidebar-w:0px; }
+      .sidebar { display:none; }
+      nav { left:0; padding:0 1.5rem; }
+      .main { padding:calc(var(--nav-h) + 1.5rem) 1.2rem 3rem; }
+      .grid-2 { grid-template-columns:1fr; }
+      footer { margin-left:0; }
+    }
+    @media(max-width:600px) { .stats-row { grid-template-columns:1fr 1fr; } }
+  </style>
+</head>
+<body>
+
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <a href="/home/" class="sidebar-logo">Eventra <span class="admin-badge">Admin</span></a>
+    <div class="sidebar-section">Overview</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" class="active" onclick="showTab('dashboard')"><span class="nav-icon">📊</span> Dashboard</a></li>
+      <li><a href="#" onclick="showTab('dashboard')"><span class="nav-icon">🔔</span> Notifications <span class="nav-badge">5</span></a></li>
+    </ul>
+    <div class="sidebar-section">Management</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" onclick="showTab('events')"><span class="nav-icon">🗓</span> Events <span class="nav-badge">24</span></a></li>
+      <li><a href="#" onclick="showTab('users')"><span class="nav-icon">👥</span> Users <span class="nav-badge">1.2K</span></a></li>
+      <li><a href="#" onclick="showTab('registrations')"><span class="nav-icon">🎟</span> Registrations <span class="nav-badge green">8</span></a></li>
+      <li><a href="#" onclick="showTab('revenue')"><span class="nav-icon">💰</span> Revenue</a></li>
+    </ul>
+    <div class="sidebar-section">Moderation</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" onclick="showTab('reviews')"><span class="nav-icon">⭐</span> Reviews <span class="nav-badge">3</span></a></li>
+      <li><a href="#" onclick="showTab('reports')"><span class="nav-icon">🚨</span> Reports <span class="nav-badge">2</span></a></li>
+    </ul>
+    <div class="sidebar-section">System</div>
+    <ul class="sidebar-nav">
+      <li><a href="#" onclick="showTab('settings')"><span class="nav-icon">⚙️</span> Settings</a></li>
+      <li><a href="#" onclick="showTab('logs')"><span class="nav-icon">📋</span> Audit Logs</a></li>
+      <li><a href="/home/"><span class="nav-icon">🌐</span> View Site</a></li>
+      <li><a href="#"><span class="nav-icon">🚪</span> Logout</a></li>
+    </ul>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="su-av">A</div>
+        <div>
+          <div class="su-name">Admin User</div>
+          <div class="su-role">Super Administrator</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- TOP NAV -->
+  <nav>
+    <div class="nav-left">
+      <h2>Admin <span id="navTitle">Dashboard</span></h2>
+      <p id="navSub">Wednesday, 1 April 2026 · Full system control</p>
+    </div>
+    <div class="nav-right">
+      <div class="nav-search"><span>🔍</span><input type="text" placeholder="Search users, events, reports…"/></div>
+      <div class="icon-btn">🔔<div class="notif-dot"></div></div>
+      <div class="icon-btn" onclick="showToast('🔗','Link Copied','Admin panel URL copied.')">🔗</div>
+      <div class="su-av-sm">A</div>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- Alert Banner -->
+    <div class="alert-banner reveal" id="alertBanner">
+      <div class="alert-left"><span class="alert-icon">⚠️</span><div><strong>2 events pending review</strong> — Please approve or reject flagged content before it goes live.</div></div>
+      <div style="display:flex;gap:.6rem;align-items:center;">
+        <button class="btn btn-primary btn-sm" onclick="showTab('reports')">Review Now</button>
+        <button class="alert-close" onclick="document.getElementById('alertBanner').style.display='none'">✕</button>
+      </div>
+    </div>
+
+    <!-- ════ DASHBOARD TAB ════ -->
+    <div id="tab-dashboard">
+      <div class="stats-row">
+        <div class="stat-card sc-1 reveal"><div class="stat-icon si-1">👥</div><div class="stat-num" data-target="1247">0</div><div class="stat-label">Total Users</div><div class="stat-delta up">↑ 8% this week</div></div>
+        <div class="stat-card sc-2 reveal"><div class="stat-icon si-2">🗓</div><div class="stat-num" data-target="24">0</div><div class="stat-label">Active Events</div><div class="stat-delta up">↑ 4 this month</div></div>
+        <div class="stat-card sc-3 reveal"><div class="stat-icon si-3">💰</div><div class="stat-num" data-target="284900" data-prefix="₹">0</div><div class="stat-label">Total Revenue</div><div class="stat-delta up">↑ 18% vs last month</div></div>
+        <div class="stat-card sc-4 reveal"><div class="stat-icon si-4">🎟</div><div class="stat-num" data-target="3194">0</div><div class="stat-label">Tickets Sold</div><div class="stat-delta up">↑ 9% this week</div></div>
+        <div class="stat-card sc-5 reveal"><div class="stat-icon si-5">🚨</div><div class="stat-num" data-target="2">0</div><div class="stat-label">Pending Reports</div><div class="stat-delta down">↑ 2 new today</div></div>
+        <div class="stat-card sc-6 reveal"><div class="stat-icon si-6">⭐</div><div class="stat-num" data-target="4.9">0</div><div class="stat-label">Avg. Rating</div><div class="stat-delta up">↑ 0.2 this quarter</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="panel reveal">
+          <div class="panel-header"><div class="panel-title">⚡ Recent Activity</div><button class="btn btn-ghost btn-sm">View all</button></div>
+          <div class="act-item"><div class="act-icon ai-rose">🎟</div><div><div class="act-body"><strong>Priya Sharma</strong> registered for UI/UX Masterclass</div><div class="act-time">2 min ago</div></div></div>
+          <div class="act-item"><div class="act-icon ai-lav">💰</div><div><div class="act-body"><strong>₹1,499</strong> payment received · AI & Future Conf</div><div class="act-time">18 min ago</div></div></div>
+          <div class="act-item"><div class="act-icon ai-red">🚨</div><div><div class="act-body"><strong>Event flagged</strong> — "Crypto Investment Workshop" reported by 2 users</div><div class="act-time">34 min ago</div></div></div>
+          <div class="act-item"><div class="act-icon ai-mint">✅</div><div><div class="act-body"><strong>New event approved</strong> — "Photography Bootcamp · Goa"</div><div class="act-time">1 hr ago</div></div></div>
+          <div class="act-item"><div class="act-icon ai-peach">👤</div><div><div class="act-body"><strong>New user registered</strong> — karan.bose@email.com</div><div class="act-time">2 hrs ago</div></div></div>
+          <div class="act-item"><div class="act-icon ai-lav">⭐</div><div><div class="act-body"><strong>Review flagged</strong> — suspected spam on React Summit</div><div class="act-time">3 hrs ago</div></div></div>
+          <div class="act-item"><div class="act-icon ai-rose">🗓</div><div><div class="act-body"><strong>Event deleted</strong> — "MLM Network Meeting" removed for ToS violation</div><div class="act-time">5 hrs ago</div></div></div>
+        </div>
+        <div class="panel reveal">
+          <div class="panel-header"><div class="panel-title">🖥 System Health</div><span class="badge b-green">All Systems Operational</span></div>
+          <div class="health-item"><div class="health-label">🌐 API Server</div><div class="health-val h-green">● Online · 99.98%</div></div>
+          <div class="health-item"><div class="health-label">🗄 Database</div><div class="health-val h-green">● Healthy · 12ms</div></div>
+          <div class="health-item"><div class="health-label">📧 Email Service</div><div class="health-val h-green">● Operational</div></div>
+          <div class="health-item"><div class="health-label">💳 Payment Gateway</div><div class="health-val h-green">● Online · Razorpay</div></div>
+          <div class="health-item"><div class="health-label">📦 Storage</div><div class="health-val h-orange">⚠ 78% used · 22GB free</div></div>
+          <div class="health-item"><div class="health-label">🔐 SSL Certificate</div><div class="health-val h-green">● Valid · Expires Aug 2026</div></div>
+          <div class="health-item"><div class="health-label">⚡ CDN</div><div class="health-val h-green">● Active · Cloudflare</div></div>
+          <div class="health-item"><div class="health-label">🕐 Uptime (30d)</div><div class="health-val h-green">99.97%</div></div>
+          <div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid rgba(200,180,220,.15);">
+            <div style="font-size:.78rem;font-weight:600;color:var(--text-mid);margin-bottom:.5rem;">Storage Usage</div>
+            <div class="mini-bar" style="height:8px;"><div class="mini-fill" style="width:78%;background:linear-gradient(90deg,#f9c784,#e07090);"></div></div>
+            <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-light);margin-top:.4rem;"><span>78 GB used</span><span>100 GB total</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel reveal">
+        <div class="panel-header"><div class="panel-title">⚡ Quick Actions</div></div>
+        <div style="display:flex;gap:.8rem;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="openModal('addUserModal')">➕ Add User</button>
+          <button class="btn btn-primary" onclick="location.href='/add-event/'">🗓 Create Event</button>
+          <button class="btn btn-ghost" onclick="showTab('reports')">🚨 Review Reports</button>
+          <button class="btn btn-ghost" onclick="exportData()">⬇ Export All Data</button>
+          <button class="btn btn-ghost" onclick="showToast('📧','Emails Sent','Bulk reminder sent to 1,842 participants.')">📧 Send Bulk Email</button>
+          <button class="btn btn-danger btn-sm" onclick="showToast('🔒','Cache Cleared','System cache has been purged.')">🔄 Clear Cache</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ EVENTS TAB ════ -->
+    <div id="tab-events" style="display:none;">
+      <div class="panel reveal">
+        <div class="panel-header">
+          <div class="panel-title">🗓 Event Management</div>
+          <div class="panel-actions">
+            <button class="btn btn-primary btn-sm" onclick="location.href='/add-event/'">➕ Add Event</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportData()">⬇ Export</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <input class="filter-input" type="text" placeholder="🔍 Search events…" oninput="filterTable(this.value,'eventsTable')"/>
+          <select class="filter-select"><option value="">All Status</option><option>Live</option><option>Upcoming</option><option>Closed</option><option>Pending</option></select>
+          <select class="filter-select"><option value="">All Categories</option><option>Workshop</option><option>Tech</option><option>Music</option><option>Food</option><option>Sports</option><option>Art</option></select>
+        </div>
+        <div class="table-wrap">
+          <table id="eventsTable">
+            <thead>
+              <tr>
+                <th><label class="cb-wrap"><input type="checkbox" onchange="selectAll(this,'eventsTable')"/></label></th>
+                <th onclick="sortTable('eventsTable',1)">Event ↕</th>
+                <th onclick="sortTable('eventsTable',2)">Category ↕</th>
+                <th onclick="sortTable('eventsTable',3)">Organiser ↕</th>
+                <th onclick="sortTable('eventsTable',4)">Date ↕</th>
+                <th onclick="sortTable('eventsTable',5)">Registrations ↕</th>
+                <th onclick="sortTable('eventsTable',6)">Revenue ↕</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><input type="checkbox"/></td><td>🎨 UI/UX Masterclass 2025</td><td><span class="badge b-purple">Workshop</span></td><td>Priya Sharma</td><td>28 Aug 2025</td><td>42/60<div class="mini-bar"><div class="mini-fill" style="width:70%"></div></div></td><td>₹20,958</td><td><span class="badge b-green">Live</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-ghost btn-sm" onclick="location.href='event-details.html'">👁</button><button class="btn btn-ghost btn-sm" onclick="openModal('editEventModal')">✏️</button><button class="btn btn-danger btn-sm" onclick="confirmDelete('this event')">🗑</button></div></td></tr>
+              <tr><td><input type="checkbox"/></td><td>🎵 Indie Sound Fest 2025</td><td><span class="badge b-blue">Music</span></td><td>Rohan Mehta</td><td>5 Sep 2025</td><td>120/200<div class="mini-bar"><div class="mini-fill" style="width:60%"></div></div></td><td>₹1,19,880</td><td><span class="badge b-green">Live</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-ghost btn-sm">👁</button><button class="btn btn-ghost btn-sm" onclick="openModal('editEventModal')">✏️</button><button class="btn btn-danger btn-sm" onclick="confirmDelete('this event')">🗑</button></div></td></tr>
+              <tr><td><input type="checkbox"/></td><td>💻 AI & Future Conf 2025</td><td><span class="badge b-blue">Tech</span></td><td>Aanya Kapoor</td><td>15 Sep 2025</td><td>492/500<div class="mini-bar"><div class="mini-fill" style="width:98%"></div></div></td><td>₹7,36,308</td><td><span class="badge b-orange">Sold Out</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-ghost btn-sm">👁</button><button class="btn btn-ghost btn-sm" onclick="openModal('editEventModal')">✏️</button><button class="btn btn-danger btn-sm" onclick="confirmDelete('this event')">🗑</button></div></td></tr>
+              <tr><td><input type="checkbox"/></td><td>🍜 Street Food Carnival</td><td><span class="badge b-orange">Food</span></td><td>Vikram Nair</td><td>20 Sep 2025</td><td>680/800<div class="mini-bar"><div class="mini-fill" style="width:85%"></div></div></td><td>Free</td><td><span class="badge b-green">Live</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-ghost btn-sm">👁</button><button class="btn btn-ghost btn-sm" onclick="openModal('editEventModal')">✏️</button><button class="btn btn-danger btn-sm" onclick="confirmDelete('this event')">🗑</button></div></td></tr>
+              <tr><td><input type="checkbox"/></td><td>🏃 City Marathon 2025</td><td><span class="badge b-green">Sports</span></td><td>Sneha Patel</td><td>2 Oct 2025</td><td>1200/1500<div class="mini-bar"><div class="mini-fill" style="width:80%"></div></div></td><td>₹3,58,800</td><td><span class="badge b-green">Live</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-ghost btn-sm">👁</button><button class="btn btn-ghost btn-sm" onclick="openModal('editEventModal')">✏️</button><button class="btn btn-danger btn-sm" onclick="confirmDelete('this event')">🗑</button></div></td></tr>
+              <tr><td><input type="checkbox"/></td><td>⚠️ Crypto Investment WS</td><td><span class="badge b-grey">Other</span></td><td>Unknown User</td><td>10 Oct 2025</td><td>0/100</td><td>₹0</td><td><span class="badge b-red">Pending Review</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-success btn-sm" onclick="approveItem('event')">✅ Approve</button><button class="btn btn-danger btn-sm" onclick="confirmDelete('this flagged event')">🚫 Reject</button></div></td></tr>
+              <tr><td><input type="checkbox"/></td><td>⚛️ React Summit India</td><td><span class="badge b-blue">Tech</span></td><td>Karan Bose</td><td>18 Oct 2025</td><td>340/500<div class="mini-bar"><div class="mini-fill" style="width:68%"></div></div></td><td>₹6,79,660</td><td><span class="badge b-blue">Upcoming</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-ghost btn-sm">👁</button><button class="btn btn-ghost btn-sm" onclick="openModal('editEventModal')">✏️</button><button class="btn btn-danger btn-sm" onclick="confirmDelete('this event')">🗑</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:1rem;flex-wrap:wrap;gap:.5rem;">
+          <span style="font-size:.78rem;color:var(--text-light);">Showing 7 of 24 events</span>
+          <div style="display:flex;gap:.4rem;">
+            <button class="btn btn-ghost btn-sm">‹ Prev</button>
+            <button class="btn btn-primary btn-sm">1</button>
+            <button class="btn btn-ghost btn-sm">2</button>
+            <button class="btn btn-ghost btn-sm">3</button>
+            <button class="btn btn-ghost btn-sm">Next ›</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ USERS TAB ════ -->
+    <div id="tab-users" style="display:none;">
+      <div class="panel reveal">
+        <div class="panel-header">
+          <div class="panel-title">👥 User Management</div>
+          <div class="panel-actions">
+            <button class="btn btn-primary btn-sm" onclick="openModal('addUserModal')">➕ Add User</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportData()">⬇ Export</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <input class="filter-input" type="text" placeholder="🔍 Search users…" oninput="filterTable(this.value,'usersTable')"/>
+          <select class="filter-select"><option>All Roles</option><option>Admin</option><option>Organiser</option><option>Participant</option></select>
+          <select class="filter-select"><option>All Status</option><option>Active</option><option>Suspended</option><option>Banned</option></select>
+        </div>
+        <div class="table-wrap">
+          <table id="usersTable">
+            <thead>
+              <tr>
+                <th><label class="cb-wrap"><input type="checkbox" onchange="selectAll(this,'usersTable')"/></label></th>
+                <th onclick="sortTable('usersTable',1)">User ↕</th>
+                <th onclick="sortTable('usersTable',2)">Email ↕</th>
+                <th>Role</th>
+                <th onclick="sortTable('usersTable',4)">Events ↕</th>
+                <th onclick="sortTable('usersTable',5)">Joined ↕</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><input type="checkbox"/></td><td><div style="display:flex;align-items:center;"><div class="av-sm av1">P</div>Priya Sharma</div></td><td>priya@email.com</td><td><span class="badge b-purple">Organiser</span></td><td>5</td><td>Jan 2024</td><td><span class="badge b-green">Active</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-ghost btn-sm" onclick="openModal('editUserModal')">✏️</button><button class="btn btn-danger btn-sm" onclick="showToast('🔒','User Suspended','Priya Sharma has been suspended.')">🔒</button></div></td></tr>
+              <tr><td><input type="checkbox"/></td><td><div style="display:flex;align-items:center;"><div class="av-sm av2">R</div>Rohan Mehta</div></td><td>rohan@email.com</td><td><span class="badge b-purple">Organiser</span></td><td>3</td><td>Feb 2024</td><td><span class="badge b-green">Active</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-ghost btn-sm" onclick="openModal('editUserModal')">✏️</button><button class="btn btn-danger btn-sm" onclick="showToast('🔒','User Suspended','Rohan Mehta suspended.')">🔒</button></div></td></tr>
+              <tr><td><input type="checkbox"/></td><td><div style="display:flex;align-items:center;"><div class="av-sm av3">A</div>Aanya Kapoor</div></td><td>aanya@email.com</td><td><span class="badge b-blue">Participant</span></td><td>0</td><td>Mar 2024</td><td><span class="badge b-green">Active</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-ghost btn-sm" onclick="openModal('editUserModal')">✏️</button><button class="btn btn-danger btn-sm" onclick="showToast('🔒','Suspended','User suspended.')">🔒</button></div></td></tr>
+              <tr><td><input type="checkbox"/></td><td><div style="display:flex;align-items:center;"><div class="av-sm av4">V</div>Vikram Nair</div></td><td>vikram@email.com</td><td><span class="badge b-purple">Organiser</span></td><td>2</td><td>Apr 2024</td><td><span class="badge b-green">Active</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-ghost btn-sm" onclick="openModal('editUserModal')">✏️</button><button class="btn btn-danger btn-sm" onclick="showToast('🔒','Suspended','Vikram Nair suspended.')">🔒</button></div></td></tr>
+              <tr><td><input type="checkbox"/></td><td><div style="display:flex;align-items:center;"><div class="av-sm av5">S</div>Sneha Patel</div></td><td>sneha@email.com</td><td><span class="badge b-blue">Participant</span></td><td>0</td><td>May 2024</td><td><span class="badge b-orange">Suspended</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-ghost btn-sm" onclick="openModal('editUserModal')">✏️</button><button class="btn btn-success btn-sm" onclick="showToast('✅','Restored','Sneha Patel has been restored.')">✅</button></div></td></tr>
+              <tr><td><input type="checkbox"/></td><td><div style="display:flex;align-items:center;"><div class="av-sm av1">K</div>Karan Bose</div></td><td>karan@email.com</td><td><span class="badge b-red">Admin</span></td><td>8</td><td>Dec 2023</td><td><span class="badge b-green">Active</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-ghost btn-sm" onclick="openModal('editUserModal')">✏️</button><button class="btn btn-danger btn-sm" disabled style="opacity:.4;cursor:not-allowed;">🔒</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:1rem;flex-wrap:wrap;gap:.5rem;">
+          <span style="font-size:.78rem;color:var(--text-light);">Showing 6 of 1,247 users</span>
+          <div style="display:flex;gap:.4rem;">
+            <button class="btn btn-ghost btn-sm">‹ Prev</button>
+            <button class="btn btn-primary btn-sm">1</button>
+            <button class="btn btn-ghost btn-sm">2</button>
+            <button class="btn btn-ghost btn-sm">Next ›</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ REGISTRATIONS TAB ════ -->
+    <div id="tab-registrations" style="display:none;">
+      <div class="panel reveal">
+        <div class="panel-header">
+          <div class="panel-title">🎟 Registration Management</div>
+          <div class="panel-actions"><button class="btn btn-ghost btn-sm" onclick="exportData()">⬇ Export CSV</button></div>
+        </div>
+        <div class="filter-row">
+          <input class="filter-input" type="text" placeholder="🔍 Search registrations…"/>
+          <select class="filter-select"><option>All Status</option><option>Confirmed</option><option>Pending</option><option>Cancelled</option></select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Participant</th><th>Event</th><th>Ticket</th><th>Amount</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr><td>EVT-2025-8401</td><td><div style="display:flex;align-items:center;"><div class="av-sm av1">P</div>Priya Sharma</div></td><td>UI/UX Masterclass</td><td>General</td><td>₹618</td><td>28 Mar 2025</td><td><span class="badge b-green">Confirmed</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-ghost btn-sm">📧</button><button class="btn btn-danger btn-sm" onclick="showToast('🎟','Cancelled','Registration cancelled.')">Cancel</button></div></td></tr>
+              <tr><td>EVT-2025-8402</td><td><div style="display:flex;align-items:center;"><div class="av-sm av2">R</div>Rohan Mehta</div></td><td>AI & Future Conf</td><td>VIP</td><td>₹1,749</td><td>29 Mar 2025</td><td><span class="badge b-green">Confirmed</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-ghost btn-sm">📧</button><button class="btn btn-danger btn-sm" onclick="showToast('🎟','Cancelled','Registration cancelled.')">Cancel</button></div></td></tr>
+              <tr><td>EVT-2025-8403</td><td><div style="display:flex;align-items:center;"><div class="av-sm av3">A</div>Aanya Kapoor</div></td><td>React Summit India</td><td>General</td><td>₹2,349</td><td>30 Mar 2025</td><td><span class="badge b-orange">Pending</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-success btn-sm" onclick="approveItem('registration')">✅</button><button class="btn btn-danger btn-sm" onclick="showToast('❌','Rejected','Registration rejected.')">❌</button></div></td></tr>
+              <tr><td>EVT-2025-8404</td><td><div style="display:flex;align-items:center;"><div class="av-sm av4">V</div>Vikram Nair</div></td><td>City Marathon</td><td>Early Bird</td><td>₹348</td><td>31 Mar 2025</td><td><span class="badge b-green">Confirmed</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-ghost btn-sm">📧</button><button class="btn btn-danger btn-sm" onclick="showToast('🎟','Cancelled','Registration cancelled.')">Cancel</button></div></td></tr>
+              <tr><td>EVT-2025-8405</td><td><div style="display:flex;align-items:center;"><div class="av-sm av5">S</div>Sneha Patel</div></td><td>Indie Sound Fest</td><td>General</td><td>₹1,161</td><td>31 Mar 2025</td><td><span class="badge b-red">Cancelled</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-ghost btn-sm">↩ Refund</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ REVENUE TAB ════ -->
+    <div id="tab-revenue" style="display:none;">
+      <div class="stats-row">
+        <div class="stat-card sc-3 reveal"><div class="stat-icon si-3">💰</div><div class="stat-num" data-target="284900" data-prefix="₹">₹0</div><div class="stat-label">This Month</div><div class="stat-delta up">↑ 18%</div></div>
+        <div class="stat-card sc-2 reveal"><div class="stat-icon si-2">📈</div><div class="stat-num" data-target="1842400" data-prefix="₹">₹0</div><div class="stat-label">This Year</div><div class="stat-delta up">↑ 34%</div></div>
+        <div class="stat-card sc-4 reveal"><div class="stat-icon si-4">🎟</div><div class="stat-num" data-target="8650" data-prefix="₹">₹0</div><div class="stat-label">Platform Fees</div><div class="stat-delta up">↑ 9%</div></div>
+        <div class="stat-card sc-5 reveal"><div class="stat-icon si-5">↩</div><div class="stat-num" data-target="12400" data-prefix="₹">₹0</div><div class="stat-label">Refunds Issued</div><div class="stat-delta down">↑ 2 today</div></div>
+      </div>
+      <div class="panel reveal">
+        <div class="panel-header"><div class="panel-title">💰 Revenue Breakdown</div><button class="btn btn-ghost btn-sm" onclick="exportData()">⬇ Export</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Event</th><th>Organiser</th><th>Gross Revenue</th><th>Platform Fee (3%)</th><th>Net Payout</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr><td>AI & Future Conf</td><td>Aanya Kapoor</td><td>₹7,36,308</td><td>₹22,089</td><td>₹7,14,219</td><td><span class="badge b-green">Paid Out</span></td><td><button class="btn btn-ghost btn-sm">View</button></td></tr>
+              <tr><td>React Summit India</td><td>Karan Bose</td><td>₹6,79,660</td><td>₹20,390</td><td>₹6,59,270</td><td><span class="badge b-orange">Pending</span></td><td><button class="btn btn-success btn-sm" onclick="showToast('💰','Payout Initiated','₹6,59,270 sent to organiser.')">Pay Now</button></td></tr>
+              <tr><td>City Marathon</td><td>Sneha Patel</td><td>₹3,58,800</td><td>₹10,764</td><td>₹3,48,036</td><td><span class="badge b-green">Paid Out</span></td><td><button class="btn btn-ghost btn-sm">View</button></td></tr>
+              <tr><td>Indie Sound Fest</td><td>Rohan Mehta</td><td>₹1,19,880</td><td>₹3,596</td><td>₹1,16,284</td><td><span class="badge b-orange">Pending</span></td><td><button class="btn btn-success btn-sm" onclick="showToast('💰','Payout Initiated','₹1,16,284 sent.')">Pay Now</button></td></tr>
+              <tr><td>Photography Bootcamp</td><td>Vikram Nair</td><td>₹32,945</td><td>₹988</td><td>₹31,957</td><td><span class="badge b-blue">Scheduled</span></td><td><button class="btn btn-ghost btn-sm">View</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ REVIEWS TAB ════ -->
+    <div id="tab-reviews" style="display:none;">
+      <div class="panel reveal">
+        <div class="panel-header"><div class="panel-title">⭐ Review Moderation</div><span class="badge b-orange">3 Flagged</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Reviewer</th><th>Event</th><th>Rating</th><th>Review</th><th>Flag Reason</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr><td><div style="display:flex;align-items:center;"><div class="av-sm av1">X</div>anonymous_user</div></td><td>React Summit India</td><td><span style="color:var(--peach);">★★★★★</span></td><td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">"Amazing event! Buy crypto at bit.ly/xyz for 10x returns"</td><td><span class="badge b-red">Spam / Link</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-success btn-sm" onclick="approveItem('review')">✅ Keep</button><button class="btn btn-danger btn-sm" onclick="showToast('🗑','Deleted','Spam review removed.')">🗑 Delete</button></div></td></tr>
+              <tr><td><div style="display:flex;align-items:center;"><div class="av-sm av2">B</div>bot_review_99</div></td><td>UI/UX Masterclass</td><td><span style="color:var(--peach);">★</span></td><td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">"Worst event ever. Organiser is a scammer. Avoid!!!"</td><td><span class="badge b-orange">Abusive</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-success btn-sm" onclick="approveItem('review')">✅ Keep</button><button class="btn btn-danger btn-sm" onclick="showToast('🗑','Deleted','Abusive review removed.')">🗑 Delete</button></div></td></tr>
+              <tr><td><div style="display:flex;align-items:center;"><div class="av-sm av3">C</div>competitor123</div></td><td>Indie Sound Fest</td><td><span style="color:var(--peach);">★★</span></td><td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">"Go to SoundEvents instead, much better than this."</td><td><span class="badge b-purple">Competitor Promo</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-success btn-sm" onclick="approveItem('review')">✅ Keep</button><button class="btn btn-danger btn-sm" onclick="showToast('🗑','Deleted','Review removed.')">🗑 Delete</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ REPORTS TAB ════ -->
+    <div id="tab-reports" style="display:none;">
+      <div class="panel reveal">
+        <div class="panel-header"><div class="panel-title">🚨 Reported Content</div><span class="badge b-red">2 Pending Action</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Content</th><th>Type</th><th>Reported By</th><th>Reason</th><th>Date</th><th>Priority</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr><td>⚠️ Crypto Investment Workshop</td><td><span class="badge b-purple">Event</span></td><td>2 users</td><td>Misleading / Scam</td><td>31 Mar 2026</td><td><span class="badge b-red">High</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-success btn-sm" onclick="approveItem('report')">✅ Approve</button><button class="btn btn-danger btn-sm" onclick="showToast('🚫','Removed','Event removed for ToS violation.')">🚫 Remove</button></div></td></tr>
+              <tr><td>💬 Review by bot_review_99</td><td><span class="badge b-orange">Review</span></td><td>1 user</td><td>Abusive Language</td><td>30 Mar 2026</td><td><span class="badge b-orange">Medium</span></td><td><div style="display:flex;gap:.3rem;"><button class="btn btn-success btn-sm" onclick="approveItem('report')">✅ Dismiss</button><button class="btn btn-danger btn-sm" onclick="showToast('🗑','Deleted','Review removed.')">🗑 Delete</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ SETTINGS TAB ════ -->
+    <div id="tab-settings" style="display:none;">
+      <div class="grid-2">
+        <div class="panel reveal">
+          <div class="panel-header"><div class="panel-title">⚙️ General Settings</div></div>
+          <div style="display:flex;flex-direction:column;gap:1rem;">
+            <div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--text-mid);margin-bottom:.4rem;">Platform Name</label><input class="filter-input" style="width:100%;" value="Eventra" type="text"/></div>
+            <div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--text-mid);margin-bottom:.4rem;">Support Email</label><input class="filter-input" style="width:100%;" value="support@eventra.com" type="email"/></div>
+            <div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--text-mid);margin-bottom:.4rem;">Platform Fee (%)</label><input class="filter-input" style="width:100%;" value="3" type="number"/></div>
+            <div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--text-mid);margin-bottom:.4rem;">Max Events Per Organiser</label><input class="filter-input" style="width:100%;" value="10" type="number"/></div>
+            <div><label style="display:block;font-size:.8rem;font-weight:600;color:var(--text-mid);margin-bottom:.4rem;">Default Currency</label><select class="filter-select" style="width:100%;"><option>INR (₹)</option><option>USD ($)</option><option>EUR (€)</option></select></div>
+            <button class="btn btn-primary" onclick="showToast('✅','Settings Saved','General settings have been updated.')">Save Changes</button>
+          </div>
+        </div>
+        <div class="panel reveal">
+          <div class="panel-header"><div class="panel-title">🔒 Security Settings</div></div>
+          <div style="display:flex;flex-direction:column;gap:.9rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.8rem;background:rgba(255,255,255,.4);border:1px solid rgba(200,180,220,.2);border-radius:12px;"><div><div style="font-size:.85rem;font-weight:600;">Two-Factor Auth (Admin)</div><div style="font-size:.73rem;color:var(--text-light);">Required for all admin accounts</div></div><span class="badge b-green">Enabled</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.8rem;background:rgba(255,255,255,.4);border:1px solid rgba(200,180,220,.2);border-radius:12px;"><div><div style="font-size:.85rem;font-weight:600;">Email Verification</div><div style="font-size:.73rem;color:var(--text-light);">New users must verify email</div></div><span class="badge b-green">Enabled</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.8rem;background:rgba(255,255,255,.4);border:1px solid rgba(200,180,220,.2);border-radius:12px;"><div><div style="font-size:.85rem;font-weight:600;">New Event Auto-Approval</div><div style="font-size:.73rem;color:var(--text-light);">Events go live without review</div></div><span class="badge b-orange">Disabled</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.8rem;background:rgba(255,255,255,.4);border:1px solid rgba(200,180,220,.2);border-radius:12px;"><div><div style="font-size:.85rem;font-weight:600;">Maintenance Mode</div><div style="font-size:.73rem;color:var(--text-light);">Take the site offline temporarily</div></div><span class="badge b-grey">Off</span></div>
+            <button class="btn btn-primary" onclick="showToast('✅','Settings Saved','Security settings updated.')">Save Changes</button>
+            <button class="btn btn-danger btn-sm" onclick="showToast('⚠️','Warning','Maintenance mode is a destructive action.')">Enable Maintenance Mode</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ LOGS TAB ════ -->
+    <div id="tab-logs" style="display:none;">
+      <div class="panel reveal">
+        <div class="panel-header">
+          <div class="panel-title">📋 Audit Logs</div>
+          <div class="panel-actions"><button class="btn btn-ghost btn-sm" onclick="exportData()">⬇ Export Logs</button></div>
+        </div>
+        <div class="filter-row">
+          <input class="filter-input" type="text" placeholder="🔍 Search logs…"/>
+          <select class="filter-select"><option>All Actions</option><option>Login</option><option>Delete</option><option>Approve</option><option>Edit</option></select>
+          <input class="filter-input" type="date" style="min-width:140px;"/>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Timestamp</th><th>Admin</th><th>Action</th><th>Target</th><th>IP Address</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td style="font-family:monospace;font-size:.75rem;">2026-04-01 09:14:22</td><td>Admin (You)</td><td><span class="badge b-red">DELETE</span></td><td>Event: MLM Network Meeting</td><td>192.168.1.1</td><td><span class="badge b-green">Success</span></td></tr>
+              <tr><td style="font-family:monospace;font-size:.75rem;">2026-04-01 08:55:10</td><td>Admin (You)</td><td><span class="badge b-green">APPROVE</span></td><td>Event: Photography Bootcamp</td><td>192.168.1.1</td><td><span class="badge b-green">Success</span></td></tr>
+              <tr><td style="font-family:monospace;font-size:.75rem;">2026-04-01 08:30:44</td><td>Admin (You)</td><td><span class="badge b-orange">SUSPEND</span></td><td>User: sneha@email.com</td><td>192.168.1.1</td><td><span class="badge b-green">Success</span></td></tr>
+              <tr><td style="font-family:monospace;font-size:.75rem;">2026-04-01 07:12:05</td><td>Admin (You)</td><td><span class="badge b-purple">LOGIN</span></td><td>Admin Panel</td><td>192.168.1.1</td><td><span class="badge b-green">Success</span></td></tr>
+              <tr><td style="font-family:monospace;font-size:.75rem;">2026-03-31 22:47:33</td><td>Admin (You)</td><td><span class="badge b-blue">EDIT</span></td><td>Event: React Summit India</td><td>192.168.1.1</td><td><span class="badge b-green">Success</span></td></tr>
+              <tr><td style="font-family:monospace;font-size:.75rem;">2026-03-31 20:05:11</td><td>Karan Bose</td><td><span class="badge b-purple">LOGIN</span></td><td>Admin Panel</td><td>10.0.0.44</td><td><span class="badge b-red">Failed (Wrong 2FA)</span></td></tr>
+              <tr><td style="font-family:monospace;font-size:.75rem;">2026-03-31 18:30:00</td><td>Admin (You)</td><td><span class="badge b-green">PAYOUT</span></td><td>₹7,14,219 → Aanya Kapoor</td><td>192.168.1.1</td><td><span class="badge b-green">Success</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>© 2025 Eventra Admin Panel · v2.0.0</p>
+    <p>Logged in as <strong>Super Admin</strong> · Session expires in 45 min</p>
+  </footer>
+
+  <!-- MODALS -->
+  <div class="modal-overlay" id="addUserModal">
+    <div class="modal">
+      <div class="modal-title"><span>➕ Add New User</span><button class="modal-close" onclick="closeModal('addUserModal')">✕</button></div>
+      <label>Full Name *</label><input type="text" placeholder="e.g. Priya Sharma"/>
+      <label>Email Address *</label><input type="email" placeholder="priya@example.com"/>
+      <label>Role *</label><select><option>Participant</option><option>Organiser</option><option>Admin</option></select>
+      <label>Temporary Password *</label><input type="password" placeholder="Min 8 characters"/>
+      <label>Send Welcome Email</label><select><option>Yes, send welcome email</option><option>No, skip email</option></select>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('addUserModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="closeModal('addUserModal'); showToast('✅','User Created','New user added successfully.')">Create User</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="editEventModal">
+    <div class="modal">
+      <div class="modal-title"><span>✏️ Edit Event</span><button class="modal-close" onclick="closeModal('editEventModal')">✕</button></div>
+      <label>Event Title</label><input type="text" value="UI/UX Masterclass 2025"/>
+      <label>Status</label><select><option>Live</option><option>Draft</option><option>Cancelled</option><option>Suspended</option></select>
+      <label>Max Capacity</label><input type="number" value="60"/>
+      <label>Admin Notes</label><textarea rows="3" placeholder="Internal notes…"></textarea>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('editEventModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="closeModal('editEventModal'); showToast('✅','Updated','Event updated successfully.')">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="editUserModal">
+    <div class="modal">
+      <div class="modal-title"><span>✏️ Edit User</span><button class="modal-close" onclick="closeModal('editUserModal')">✕</button></div>
+      <label>Full Name</label><input type="text" value="Priya Sharma"/>
+      <label>Email</label><input type="email" value="priya@email.com"/>
+      <label>Role</label><select><option selected>Organiser</option><option>Participant</option><option>Admin</option></select>
+      <label>Account Status</label><select><option>Active</option><option>Suspended</option><option>Banned</option></select>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('editUserModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="closeModal('editUserModal'); showToast('✅','Updated','User profile updated.')">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+      <div class="modal-title"><span>🚫 Confirm Delete</span><button class="modal-close" onclick="closeModal('deleteModal')">✕</button></div>
+      <div style="text-align:center;padding:1rem 0;">
+        <div style="font-size:3rem;margin-bottom:.8rem;">⚠️</div>
+        <div style="font-size:.95rem;font-weight:600;margin-bottom:.5rem;" id="deleteTarget">Are you sure?</div>
+        <div style="font-size:.83rem;color:var(--text-mid);">This action cannot be undone. All associated data will be permanently removed.</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('deleteModal')">Cancel</button>
+        <button class="btn btn-danger" onclick="closeModal('deleteModal'); showToast('🗑','Deleted','Item permanently deleted.')">Yes, Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <div class="toast-icon" id="toastIcon">✅</div>
+    <div class="toast-text">
+      <h4 id="toastTitle">Success</h4>
+      <p id="toastMsg">Action completed.</p>
+    </div>
+  </div>
+
+  <script>
+    const tabs = ['dashboard','events','users','registrations','revenue','reviews','reports','settings','logs'];
+    const tabTitles = { dashboard:'Dashboard', events:'Event Management', users:'User Management', registrations:'Registrations', revenue:'Revenue', reviews:'Review Moderation', reports:'Reports', settings:'Settings', logs:'Audit Logs' };
+    const EVENT_REQUESTS_KEY = 'eventra_event_requests';
+    const APPROVED_EVENTS_KEY = 'eventra_events';
+    const USER_REVIEWS_KEY = 'eventra_user_reviews';
+
+    function getEventRequests() {
+      try { return JSON.parse(localStorage.getItem(EVENT_REQUESTS_KEY)) || []; }
+      catch (e) { return []; }
+    }
+
+    function saveEventRequests(list) {
+      localStorage.setItem(EVENT_REQUESTS_KEY, JSON.stringify(list));
+    }
+
+    function getApprovedEvents() {
+      try { return JSON.parse(localStorage.getItem(APPROVED_EVENTS_KEY)) || []; }
+      catch (e) { return []; }
+    }
+
+    function saveApprovedEvents(events) {
+      localStorage.setItem(APPROVED_EVENTS_KEY, JSON.stringify(events));
+    }
+
+    function getUserReviews() {
+      try { return JSON.parse(localStorage.getItem(USER_REVIEWS_KEY)) || []; }
+      catch (e) { return []; }
+    }
+
+    function saveUserReviews(list) {
+      localStorage.setItem(USER_REVIEWS_KEY, JSON.stringify(list));
+    }
+
+    function escHtml(val) {
+      return String(val || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function toPrettyDate(dateStr) {
+      if (!dateStr) return '-';
+      try {
+        return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      } catch (e) {
+        return dateStr;
+      }
+    }
+
+    function requestToEvent(req) {
+      return {
+        id: 'evt-' + String(req.id || Date.now()).replace(/^req-/, ''),
+        title: req.title,
+        category: req.category || 'Other',
+        date: req.date || '',
+        time: req.time || '',
+        venue: req.venue || '',
+        city: req.city || '',
+        price: Number(req.price || 0),
+        description: req.description || '',
+        organiser: req.organiserName || (req.organiserEmail ? req.organiserEmail.split('@')[0] : 'Organiser'),
+        organiserEmail: req.organiserEmail || '',
+        status: 'Upcoming',
+        registered: 0,
+        capacity: 100,
+        popularity: 45,
+        image: req.image || ''
+      };
+    }
+
+    function updatePendingAlertCount(count) {
+      const strong = document.querySelector('.alert-left strong');
+      if (!strong) return;
+      strong.textContent = `${count} event${count === 1 ? '' : 's'} pending review`;
+    }
+
+    function renderPendingEventRequests() {
+      const tbody = document.querySelector('#eventsTable tbody');
+      if (!tbody) return;
+
+      tbody.querySelectorAll('.event-request-row').forEach(row => row.remove());
+
+      const pending = getEventRequests()
+        .filter(r => r.status === 'pending')
+        .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+      pending.forEach(req => {
+        const tr = document.createElement('tr');
+        tr.className = 'event-request-row';
+        const revenue = Number(req.price || 0) > 0 ? `₹${Number(req.price).toLocaleString('en-IN')}` : 'Free';
+        tr.innerHTML = `
+          <td><input type="checkbox"/></td>
+          <td>🆕 ${escHtml(req.title)}</td>
+          <td><span class="badge b-grey">${escHtml(req.category || 'Other')}</span></td>
+          <td>${escHtml(req.organiserName || req.organiserEmail || 'User')}</td>
+          <td>${escHtml(toPrettyDate(req.date))}</td>
+          <td>0/100</td>
+          <td>${revenue}</td>
+          <td><span class="badge b-red">Pending Review</span></td>
+          <td>
+            <div style="display:flex;gap:.3rem;">
+              <button class="btn btn-success btn-sm" onclick="approveItem('event','${escHtml(req.id)}')">✅ Approve</button>
+              <button class="btn btn-danger btn-sm" onclick="rejectEventRequest('${escHtml(req.id)}')">🚫 Reject</button>
+            </div>
+          </td>`;
+        tbody.prepend(tr);
+      });
+
+      updatePendingAlertCount(pending.length);
+    }
+
+    function getReviewFlagBadge(text) {
+      const raw = String(text || '').toLowerCase();
+      if (/(https?:\/\/|www\.|bit\.ly|t\.co|@here|@everyone)/.test(raw)) {
+        return '<span class="badge b-red">Spam / Link</span>';
+      }
+      if (/(scam|fraud|abuse|hate|offensive|idiot|stupid)/.test(raw)) {
+        return '<span class="badge b-orange">Needs Review</span>';
+      }
+      return '<span class="badge b-blue">User Submitted</span>';
+    }
+
+    function renderUserReviewModeration() {
+      const tbody = document.querySelector('#tab-reviews tbody');
+      if (!tbody) return;
+
+      tbody.querySelectorAll('.user-review-row').forEach(row => row.remove());
+
+      const reviews = getUserReviews()
+        .slice()
+        .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+      reviews.forEach(r => {
+        const name = String(r.reviewerName || 'User');
+        const initial = escHtml(name.charAt(0).toUpperCase() || 'U');
+        const starsNum = Math.min(5, Math.max(1, Number(r.stars || 5)));
+        const stars = '★'.repeat(starsNum) + '☆'.repeat(5 - starsNum);
+        const text = escHtml(r.text || '');
+        const eventName = escHtml(r.eventTitle || 'General Event Feedback');
+
+        const tr = document.createElement('tr');
+        tr.className = 'user-review-row';
+        tr.innerHTML = `
+          <td><div style="display:flex;align-items:center;"><div class="av-sm av4">${initial}</div>${escHtml(name)}</div></td>
+          <td>${eventName}</td>
+          <td><span style="color:var(--peach);">${stars}</span></td>
+          <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">"${text}"</td>
+          <td>${getReviewFlagBadge(r.text)}</td>
+          <td>
+            <div style="display:flex;gap:.3rem;">
+              <button class="btn btn-success btn-sm" onclick="approveItem('review')">✅ Keep</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteUserReview('${escHtml(r.id || '')}')">🗑 Delete</button>
+            </div>
+          </td>`;
+        tbody.prepend(tr);
+      });
+
+      const navBadge = document.querySelector(".sidebar-nav a[onclick*=" + "'reviews'" + "] .nav-badge");
+      if (navBadge) navBadge.textContent = String(reviews.length);
+    }
+
+    function deleteUserReview(reviewId) {
+      const list = getUserReviews();
+      const next = list.filter(r => String(r.id) !== String(reviewId));
+      saveUserReviews(next);
+      renderUserReviewModeration();
+      showToast('🗑','Deleted','User review removed.');
+    }
+
+    function showTab(name) {
+      tabs.forEach(t => { const el = document.getElementById('tab-'+t); if(el) el.style.display='none'; });
+      const target = document.getElementById('tab-'+name);
+      if(target) { target.style.display='block'; }
+      document.getElementById('navTitle').textContent = tabTitles[name] || name;
+      document.querySelectorAll('.sidebar-nav a').forEach(a => {
+        a.classList.remove('active');
+        if(a.getAttribute('onclick') && a.getAttribute('onclick').includes("'"+name+"'")) a.classList.add('active');
+      });
+      window.scrollTo({top:0,behavior:'smooth'});
+      setTimeout(() => document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible')), 100);
+      animateCounters();
+      if (name === 'events') {
+        renderPendingEventRequests();
+      }
+      if (name === 'reviews') {
+        renderUserReviewModeration();
+      }
+    }
+
+    const io = new IntersectionObserver(entries => { entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); } }); }, {threshold:0.08});
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    function animateCounters() {
+      document.querySelectorAll('.stat-num[data-target]').forEach(el => {
+        delete el.dataset.animated;
+        const target = parseFloat(el.dataset.target);
+        const prefix = el.dataset.prefix || '';
+        const isFloat = target % 1 !== 0;
+        const dur = 1600; const t0 = performance.now();
+        const tick = now => {
+          const prog = Math.min((now-t0)/dur,1);
+          const ease = 1 - Math.pow(1-prog,3);
+          const val = target * ease;
+          if(target>=10000) el.textContent = prefix + Math.floor(val).toLocaleString('en-IN');
+          else if(isFloat)  el.textContent = prefix + val.toFixed(1);
+          else              el.textContent = prefix + Math.floor(val).toLocaleString('en-IN');
+          if(prog<1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+    }
+
+    function openModal(id)  { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+    document.querySelectorAll('.modal-overlay').forEach(m => { m.addEventListener('click', e => { if(e.target===m) m.classList.remove('show'); }); });
+
+    function showToast(icon, title, msg) {
+      document.getElementById('toastIcon').textContent  = icon;
+      document.getElementById('toastTitle').textContent = title;
+      document.getElementById('toastMsg').textContent   = msg;
+      const t = document.getElementById('toast');
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    function confirmDelete(what) {
+      document.getElementById('deleteTarget').textContent = 'Are you sure you want to delete ' + what + '?';
+      openModal('deleteModal');
+    }
+
+    function approveItem(type, requestId) {
+      if (type === 'event' && requestId) {
+        const requests = getEventRequests();
+        const idx = requests.findIndex(r => r.id === requestId);
+        if (idx === -1) {
+          showToast('⚠️','Missing Request','This event request no longer exists.');
+          renderPendingEventRequests();
+          return;
+        }
+
+        const req = requests[idx];
+        req.status = 'approved';
+        req.reviewedAt = new Date().toISOString();
+        requests[idx] = req;
+        saveEventRequests(requests);
+
+        const approvedEvents = getApprovedEvents();
+        const eventRecord = requestToEvent(req);
+        if (!approvedEvents.some(e => e.id === eventRecord.id)) {
+          approvedEvents.push(eventRecord);
+          saveApprovedEvents(approvedEvents);
+        }
+
+        showToast('✅','Approved','Event request approved and synced to organiser account.');
+        renderPendingEventRequests();
+        return;
+      }
+
+      showToast('✅','Approved','The '+type+' has been approved and is now live.');
+    }
+
+    function rejectEventRequest(requestId) {
+      const requests = getEventRequests();
+      const idx = requests.findIndex(r => r.id === requestId);
+      if (idx === -1) {
+        showToast('⚠️','Missing Request','This event request no longer exists.');
+        renderPendingEventRequests();
+        return;
+      }
+
+      requests[idx].status = 'rejected';
+      requests[idx].reviewedAt = new Date().toISOString();
+      saveEventRequests(requests);
+      showToast('🚫','Rejected','Event request has been rejected.');
+      renderPendingEventRequests();
+    }
+
+    function filterTable(q, tableId) {
+      document.querySelectorAll('#'+tableId+' tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+      });
+    }
+
+    const sortDirs = {};
+    function sortTable(tableId, col) {
+      const key = tableId+col; sortDirs[key] = !sortDirs[key];
+      const tbody = document.querySelector('#'+tableId+' tbody');
+      if(!tbody) return;
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a,b) => {
+        const ta = a.cells[col]?.textContent.trim()||'';
+        const tb = b.cells[col]?.textContent.trim()||'';
+        const na = parseFloat(ta.replace(/[^0-9.]/g,''));
+        const nb = parseFloat(tb.replace(/[^0-9.]/g,''));
+        if(!isNaN(na)&&!isNaN(nb)) return sortDirs[key]?na-nb:nb-na;
+        return sortDirs[key]?ta.localeCompare(tb):tb.localeCompare(ta);
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    }
+
+    function selectAll(masterCb, tableId) {
+      document.querySelectorAll('#'+tableId+' tbody input[type="checkbox"]').forEach(cb => { cb.checked = masterCb.checked; });
+    }
+
+    function exportData() { showToast('⬇','Export Started','Your CSV file is being prepared for download.'); }
+
+    renderPendingEventRequests();
+    renderUserReviewModeration();
+    showTab('dashboard');
+  </script>
+
+</body>
+</html>

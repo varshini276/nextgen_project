@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eventra – Login</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@900&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
+:root {
+  --rose:#f4a7b9;
+  --lavender:#c9b8f0;
+  --glass-bg:rgba(255,255,255,0.55);
+  --glass-border:rgba(255,255,255,0.75);
+}
+
+body{
+  font-family:'DM Sans',sans-serif;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(135deg,#fde8f0,#fef3e2,#e8eaff,#e0f7f4);
+}
+
+/* UI */
+.container{
+  width:360px;
+  padding:2rem;
+  border-radius:20px;
+  background:var(--glass-bg);
+  backdrop-filter:blur(18px);
+  border:1px solid var(--glass-border);
+  text-align:center;
+  box-shadow:0 10px 40px rgba(160,100,180,0.2);
+}
+
+.logo{
+  font-family:'Playfair Display';
+  font-size:1.8rem;
+  font-weight:900;
+  margin-bottom:1rem;
+}
+
+/* inputs */
+.input-group{
+  position:relative;
+}
+
+input, select{
+  width:100%;
+  padding:.7rem;
+  margin:.5rem 0;
+  border-radius:10px;
+  border:1px solid #ddd;
+}
+
+/* eye */
+.eye{
+  position:absolute;
+  right:10px;
+  top:50%;
+  transform:translateY(-50%);
+  cursor:pointer;
+}
+
+/* button */
+button{
+  width:100%;
+  padding:.8rem;
+  border:none;
+  border-radius:50px;
+  background:linear-gradient(135deg,#e07090,#a070d0);
+  color:white;
+  cursor:pointer;
+}
+
+/* links */
+.link{
+  font-size:.8rem;
+  color:#a070d0;
+  cursor:pointer;
+}
+
+/* messages */
+.message{
+  font-size:.8rem;
+  margin-top:5px;
+}
+.success{color:green;}
+.error{color:red;}
+
+/* modal */
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.4);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
+
+.modal-content{
+  background:white;
+  padding:20px;
+  border-radius:15px;
+  width:300px;
+  text-align:center;
+  position:relative;
+}
+
+.close{
+  position:absolute;
+  top:10px;
+  right:15px;
+  cursor:pointer;
+}
+
+.modal-content input{
+  margin-bottom:10px;
+}
+.modal-content button{
+  margin-top:10px;
+}
+.modal-content .link{
+  display:block;
+  margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="logo">Eventra</div>
+  <h3>Login</h3>
+  
+
+  <form onsubmit="login(event)">
+    
+    <select id="role">
+      <option value="user">User</option>
+      <option value="admin">Admin</option>
+    </select>
+
+    <input type="email" id="email" placeholder="Email" required>
+
+    <div class="input-group">
+      <input type="password" id="password" placeholder="Password" required>
+      <span class="eye" onclick="togglePassword()">👁️</span>
+    </div>
+
+    <div style="text-align:right;">
+      <span class="link" onclick="openModal()">Forgot Password?</span>
+    </div>
+
+    <button>Login</button>
+    <div id="msg" class="message"></div>
+
+  </form>
+
+  <p style="margin-top:10px;font-size:.8rem;">
+    Don't have an account? <a href="/register/">Sign up</a>
+  </p>
+  <div style="margin-top:20px; text-align:center;">
+  <button onclick="goHome()" style="background:#eee;color:#333;font-weight:700;">
+    ← Back to Home
+  </button>
+</div>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">❌</span>
+    <h3>Reset Password</h3>
+
+    <input type="email" id="fpEmail" placeholder="Email">
+    <input type="password" id="newPass" placeholder="New Password">
+    <input type="password" id="confirmPass" placeholder="Confirm Password">
+
+    <button onclick="resetPassword()">Update</button>
+    <span class="link" onclick="closeModal()">Cancel</span>
+
+    <div id="fpMsg" class="message"></div>
+  </div>
+</div>
+
+<script>
+// default admin
+if(!localStorage.getItem("eventra_admin")){
+  localStorage.setItem("eventra_admin", JSON.stringify({
+    email:"admin@eventra.com",
+    password:"admin123"
+  }));
+}
+
+// toggle password
+function togglePassword(){
+  const p = document.getElementById("password");
+  p.type = p.type === "password" ? "text" : "password";
+}
+
+// back to home
+function goHome(){
+  window.location.href = "/home/";
+}
+
+
+// login
+function login(e){
+  e.preventDefault();
+
+  const role = document.getElementById("role").value;
+  const emailVal = document.getElementById("email").value;
+  const passVal = document.getElementById("password").value;
+  const msg = document.getElementById("msg");
+
+  // ADMIN LOGIN
+  if(role === "admin"){
+    const admin = JSON.parse(localStorage.getItem("eventra_admin"));
+
+    if(admin && emailVal === admin.email && passVal === admin.password){
+      localStorage.setItem("loggedIn","true");
+      localStorage.setItem("role","admin");
+
+      showMsg(msg,"Admin login successful",true);
+
+      setTimeout(()=>{
+        window.location.href = "/admin/";
+      },1000);
+
+    } else {
+      showMsg(msg,"Invalid admin credentials",false);
+    }
+
+  }
+
+  // USER LOGIN
+  else {
+    const user = JSON.parse(localStorage.getItem("eventra_user"));
+
+    if(!user){
+      showMsg(msg,"No user found. Please register first.",false);
+      return;
+    }
+
+    if(emailVal === user.email && passVal === user.password){
+      
+      localStorage.setItem("loggedIn","true");
+      localStorage.setItem("role","user");
+      localStorage.setItem("email", user.email); // ✅ important
+
+      showMsg(msg,"Login successful",true);
+
+      // ✅ REDIRECT TO HOME
+      setTimeout(()=>{
+        window.location.href = "/dashboard/";
+      },1000);
+
+    } else {
+      showMsg(msg,"Invalid user credentials",false);
+    }
+  }
+}
+
+function roleSelect(){
+  return document.getElementById("role").value;
+}
+
+// messages
+function showMsg(el,text,ok){
+  el.textContent=text;
+  el.className="message "+(ok?"success":"error");
+}
+
+// modal
+function openModal(){
+  document.getElementById("modal").style.display="flex";
+}
+function closeModal(){
+  document.getElementById("modal").style.display="none";
+}
+
+// reset password
+function resetPassword(){
+  let user = JSON.parse(localStorage.getItem("eventra_user"));
+  const msg = document.getElementById("fpMsg");
+
+  if(!user){
+    showMsg(msg,"No user found",false);
+    return;
+  }
+
+  if(fpEmail.value !== user.email){
+    showMsg(msg,"Email not found",false);
+    return;
+  }
+
+  if(newPass.value !== confirmPass.value){
+    showMsg(msg,"Passwords do not match",false);
+    return;
+  }
+
+  user.password = newPass.value;
+  localStorage.setItem("eventra_user", JSON.stringify(user));
+
+  showMsg(msg,"Password updated!",true);
+  setTimeout(closeModal,1000);
+}
+</script>
+
+</body>
+</html>

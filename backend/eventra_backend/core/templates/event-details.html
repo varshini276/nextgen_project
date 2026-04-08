@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Eventra – Register for Event</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --rose:         #f4a7b9;
+      --peach:        #f9c784;
+      --lavender:     #c9b8f0;
+      --sky:          #a8d8f0;
+      --mint:         #aaecdc;
+      --glass-bg:     rgba(255,255,255,0.55);
+      --glass-border: rgba(255,255,255,0.75);
+      --shadow:       0 8px 40px rgba(180,120,140,0.18);
+      --text-dark:    #3a2a3e;
+      --text-mid:     #7a6080;
+      --text-light:   #b8a8c0;
+      --radius:       20px;
+      --nav-h:        72px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', 'Noto Sans Tamil', sans-serif;
+      background: linear-gradient(135deg, #fde8f0 0%, #fef3e2 30%, #e8eaff 65%, #e0f7f4 100%);
+      min-height: 100vh;
+      color: var(--text-dark);
+      overflow-x: hidden;
+    }
+
+    .blob { position:fixed; border-radius:50%; filter:blur(80px); opacity:.4; pointer-events:none; z-index:0; }
+    .blob-1 { width:420px; height:420px; background:var(--rose);     top:-100px; left:-100px; }
+    .blob-2 { width:340px; height:340px; background:var(--lavender); top:45%;   right:-80px; }
+    .blob-3 { width:280px; height:280px; background:var(--mint);     bottom:-60px; left:35%; }
+
+    nav {
+      position:fixed; top:0; left:0; right:0; z-index:100;
+      height:var(--nav-h);
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 5%;
+      background:rgba(255,248,245,0.72);
+      backdrop-filter:blur(18px);
+      border-bottom:1px solid var(--glass-border);
+      box-shadow:0 2px 24px rgba(200,140,160,0.10);
+    }
+    .nav-logo {
+      font-family:'Playfair Display',serif; font-size:1.6rem; font-weight:900;
+      background:linear-gradient(135deg,#e07090,#a070d0,#50b8d8);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+      text-decoration:none;
+    }
+    .nav-links { display:flex; gap:2rem; list-style:none; }
+    .nav-links a {
+      text-decoration:none; font-size:.95rem; font-weight:500;
+      color:var(--text-mid); transition:color .25s; position:relative;
+    }
+    .nav-links a::after {
+      content:''; position:absolute; bottom:-3px; left:0; right:0;
+      height:2px; border-radius:2px;
+      background:linear-gradient(90deg,var(--rose),var(--lavender));
+      transform:scaleX(0); transition:transform .25s;
+    }
+    .nav-links a:hover { color:var(--text-dark); }
+    .nav-links a:hover::after { transform:scaleX(1); }
+
+    .btn {
+      display:inline-flex; align-items:center; gap:.5rem;
+      padding:.72rem 1.6rem; border:none; cursor:pointer;
+      border-radius:50px; font-family:'DM Sans','Noto Sans Tamil',sans-serif;
+      font-size:.93rem; font-weight:600;
+      transition:transform .2s, filter .2s;
+      text-decoration:none;
+    }
+    .btn:hover { transform:translateY(-2px); filter:brightness(1.06); }
+    .btn-primary { background:linear-gradient(135deg,#e07090,#a070d0); color:#fff; box-shadow:0 6px 28px rgba(160,80,180,.35); }
+    .btn-ghost   { background:var(--glass-bg); backdrop-filter:blur(10px); border:1.5px solid var(--glass-border); color:var(--text-dark); }
+
+    /* LANGUAGE TOGGLE */
+    .lang-toggle {
+      display:inline-flex; align-items:center; gap:.3rem;
+      background:rgba(255,255,255,.55); backdrop-filter:blur(10px);
+      border:1.5px solid rgba(200,180,220,.4);
+      border-radius:50px; padding:.3rem .4rem;
+    }
+    .lang-btn {
+      padding:.3rem .75rem; border-radius:50px;
+      font-size:.78rem; font-weight:700; cursor:pointer;
+      transition:all .25s; color:var(--text-mid);
+      background:none; border:none;
+      font-family:'DM Sans','Noto Sans Tamil',sans-serif;
+    }
+    .lang-btn.active {
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      color:#fff; box-shadow:0 3px 10px rgba(160,80,180,.3);
+    }
+
+    .breadcrumb {
+      position:relative; z-index:1;
+      padding: calc(var(--nav-h) + 1.8rem) 5% 0;
+      display:flex; align-items:center; gap:.5rem;
+      font-size:.83rem; color:var(--text-light);
+    }
+    .breadcrumb a { color:var(--text-mid); text-decoration:none; transition:color .2s; }
+    .breadcrumb a:hover { color:var(--text-dark); }
+
+    .reg-progress {
+      position:relative; z-index:1;
+      padding:1.5rem 5% 0;
+      display:flex; align-items:center;
+      width:fit-content;
+    }
+    .rp-step { display:flex; flex-direction:column; align-items:center; gap:.4rem; cursor:pointer; }
+    .rp-step:hover .rp-circle { filter:brightness(1.1); transform:scale(1.08); }
+    .rp-circle {
+      width:38px; height:38px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:.85rem; font-weight:800;
+      background:rgba(200,180,220,.2); color:var(--text-light);
+      border:2px solid rgba(200,180,220,.3);
+      transition:all .35s ease;
+    }
+    .rp-step.active .rp-circle {
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      color:#fff; border-color:transparent;
+      box-shadow:0 4px 16px rgba(160,80,180,.35);
+    }
+    .rp-step.done .rp-circle {
+      background:linear-gradient(135deg,var(--mint),var(--sky));
+      color:#fff; border-color:transparent; font-size:0;
+    }
+    .rp-step.done .rp-circle::after { content:'✓'; font-size:.85rem; font-weight:900; }
+    .rp-label { font-size:.72rem; font-weight:600; color:var(--text-light); white-space:nowrap; transition:color .3s; }
+    .rp-step.active .rp-label { color:#a070d0; }
+    .rp-step.done   .rp-label { color:#50c8a8; }
+    .rp-line {
+      width:60px; height:2px; background:rgba(200,180,220,.3);
+      border-radius:2px; margin-bottom:1.2rem; flex-shrink:0;
+      transition:background .35s ease;
+    }
+    .rp-line.done { background:linear-gradient(90deg,var(--mint),var(--sky)); }
+
+    .reg-layout {
+      position:relative; z-index:1;
+      display:grid; grid-template-columns:1fr 360px;
+      gap:2rem; padding:2rem 5% 5rem; align-items:start;
+    }
+    .form-left { display:flex; flex-direction:column; gap:1.5rem; }
+
+    .glass-card {
+      background:var(--glass-bg); backdrop-filter:blur(16px);
+      border:1.5px solid var(--glass-border);
+      border-radius:var(--radius); padding:2rem; box-shadow:var(--shadow);
+    }
+    .card-title {
+      font-family:'Playfair Display',serif;
+      font-size:1.15rem; font-weight:800; color:var(--text-dark);
+      display:flex; align-items:center; gap:.5rem;
+      margin-bottom:1.5rem; padding-bottom:1rem;
+      border-bottom:1px solid rgba(200,180,220,.2);
+    }
+
+    .form-group { margin-bottom:1.3rem; }
+    .form-row   { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; margin-bottom:1.3rem; }
+
+    label { display:block; font-size:.82rem; font-weight:600; color:var(--text-mid); margin-bottom:.4rem; }
+    .required { color:#e07090; margin-left:2px; }
+
+    input[type="text"],input[type="email"],input[type="tel"],
+    input[type="number"],input[type="date"],select,textarea {
+      width:100%; padding:.82rem 1.1rem;
+      background:rgba(255,255,255,.65);
+      border:1.5px solid rgba(200,180,220,.35);
+      border-radius:14px;
+      font-family:'DM Sans','Noto Sans Tamil',sans-serif; font-size:.92rem;
+      color:var(--text-dark); outline:none;
+      transition:border-color .25s, box-shadow .25s; appearance:none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color:var(--lavender); box-shadow:0 0 0 3px rgba(201,184,240,.2);
+    }
+    input::placeholder, textarea::placeholder { color:var(--text-light); }
+    textarea { resize:vertical; min-height:90px; line-height:1.6; }
+    select {
+      cursor:pointer;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b8a8c0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 1rem center; padding-right:2.5rem;
+    }
+
+    .input-icon-wrap { position:relative; }
+    .input-icon-wrap input { padding-left:2.8rem; }
+    .input-icon { position:absolute; left:.9rem; top:50%; transform:translateY(-50%); font-size:1rem; pointer-events:none; color:var(--text-light); }
+
+    .input-valid   { border-color:#40c080 !important; }
+    .input-invalid { border-color:#e07090 !important; }
+    .field-msg { font-size:.73rem; margin-top:.3rem; }
+    .field-msg.ok  { color:#40c080; }
+    .field-msg.err { color:#e07090; }
+
+    .ticket-options { display:flex; flex-direction:column; gap:.9rem; }
+    .ticket-opt {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:1.1rem 1.3rem;
+      background:rgba(255,255,255,.45);
+      border:2px solid rgba(200,180,220,.3);
+      border-radius:16px; cursor:pointer;
+      transition:all .25s; flex-wrap:wrap; gap:.8rem;
+    }
+    .ticket-opt:hover    { border-color:var(--lavender); background:linear-gradient(135deg,rgba(253,232,240,.4),rgba(232,234,255,.4)); }
+    .ticket-opt.selected { border-color:#a070d0; background:linear-gradient(135deg,rgba(253,232,240,.5),rgba(232,234,255,.5)); box-shadow:0 4px 20px rgba(160,100,200,.18); }
+    .to-left { display:flex; align-items:center; gap:1rem; }
+    .to-radio { width:20px; height:20px; border-radius:50%; border:2px solid rgba(200,180,220,.5); display:flex; align-items:center; justify-content:center; transition:all .25s; flex-shrink:0; }
+    .ticket-opt.selected .to-radio { border-color:#a070d0; background:linear-gradient(135deg,#e07090,#a070d0); }
+    .ticket-opt.selected .to-radio::after { content:''; width:8px; height:8px; border-radius:50%; background:#fff; display:block; }
+    .to-info h4 { font-size:.92rem; font-weight:700; margin-bottom:.2rem; }
+    .to-info p  { font-size:.78rem; color:var(--text-mid); }
+    .to-price {
+      font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:900;
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .to-badge { font-size:.68rem; font-weight:700; padding:.18rem .55rem; border-radius:50px; background:linear-gradient(135deg,#fde8f0,#e8eaff); color:#a070d0; }
+
+    .qty-row {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.9rem 1.2rem; background:rgba(255,255,255,.4);
+      border:1.5px solid rgba(200,180,220,.28); border-radius:14px; margin-top:1rem;
+    }
+    .qty-label { font-size:.87rem; font-weight:600; }
+    .qty-ctrl  { display:flex; align-items:center; gap:.9rem; }
+    .qty-btn {
+      width:32px; height:32px; border-radius:50%;
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      color:#fff; border:none; font-size:1.1rem;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; transition:filter .2s;
+    }
+    .qty-btn:hover { filter:brightness(1.1); }
+    .qty-num { font-weight:800; font-size:1rem; min-width:24px; text-align:center; }
+
+    .addons-grid { display:grid; grid-template-columns:1fr 1fr; gap:.9rem; }
+    .addon-card {
+      padding:1rem; border-radius:14px; background:rgba(255,255,255,.4);
+      border:1.5px solid rgba(200,180,220,.28); cursor:pointer; transition:all .25s; text-align:center;
+    }
+    .addon-card:hover   { border-color:var(--lavender); background:linear-gradient(135deg,rgba(253,232,240,.35),rgba(232,234,255,.35)); }
+    .addon-card.checked { border-color:#a070d0; background:linear-gradient(135deg,rgba(253,232,240,.5),rgba(232,234,255,.5)); }
+    .addon-icon  { font-size:1.6rem; margin-bottom:.4rem; }
+    .addon-name  { font-size:.82rem; font-weight:700; margin-bottom:.2rem; }
+    .addon-price { font-size:.75rem; color:#a070d0; font-weight:600; }
+
+    .payment-methods { display:flex; gap:.8rem; flex-wrap:wrap; margin-bottom:1.3rem; }
+    .pay-opt {
+      flex:1; min-width:100px; padding:.8rem .6rem;
+      border:1.5px solid rgba(200,180,220,.3); border-radius:14px; text-align:center;
+      cursor:pointer; background:rgba(255,255,255,.4); transition:all .25s;
+    }
+    .pay-opt:hover  { border-color:var(--lavender); }
+    .pay-opt.active { border-color:#a070d0; background:linear-gradient(135deg,rgba(253,232,240,.4),rgba(232,234,255,.4)); }
+    .pay-icon  { font-size:1.5rem; margin-bottom:.3rem; }
+    .pay-label { font-size:.75rem; font-weight:600; color:var(--text-mid); }
+    .pay-opt.active .pay-label { color:#a070d0; }
+
+    .card-fields { display:flex; flex-direction:column; gap:.9rem; margin-top:.5rem; }
+    .card-row    { display:grid; grid-template-columns:1fr 1fr; gap:.9rem; }
+
+    .check-row {
+      display:flex; align-items:flex-start; gap:.8rem;
+      font-size:.83rem; color:var(--text-mid); line-height:1.55;
+      margin-bottom:.8rem; cursor:pointer;
+    }
+    .custom-check {
+      width:18px; height:18px; border-radius:5px; flex-shrink:0; margin-top:.1rem;
+      border:2px solid rgba(200,180,220,.5);
+      display:flex; align-items:center; justify-content:center;
+      transition:all .2s; cursor:pointer;
+    }
+    .custom-check.checked { background:linear-gradient(135deg,#e07090,#a070d0); border-color:transparent; }
+    .custom-check.checked::after { content:'✓'; color:#fff; font-size:.65rem; font-weight:800; }
+    .check-row a { color:#a070d0; text-decoration:none; }
+    .check-row a:hover { text-decoration:underline; }
+
+    .reg-right { position:sticky; top:calc(var(--nav-h) + 1.5rem); display:flex; flex-direction:column; gap:1.5rem; }
+
+    .event-summary {
+      background:var(--glass-bg); backdrop-filter:blur(16px);
+      border:1.5px solid var(--glass-border); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);
+    }
+    .es-banner { height:120px; background:linear-gradient(135deg,#fde8f0,#e8d8ff,#d0eeff); display:flex; align-items:center; justify-content:center; font-size:2.8rem; }
+    .es-body { padding:1.3rem; }
+    .es-tag { display:inline-block; padding:.22rem .65rem; border-radius:50px; background:linear-gradient(135deg,#fde8f0,#e8eaff); font-size:.72rem; font-weight:700; color:#a070d0; margin-bottom:.5rem; }
+    .es-title { font-family:'Playfair Display',serif; font-size:1rem; font-weight:800; margin-bottom:.7rem; line-height:1.3; }
+    .es-meta  { display:flex; flex-direction:column; gap:.4rem; font-size:.8rem; color:var(--text-mid); }
+    .es-meta span { display:flex; align-items:center; gap:.4rem; }
+
+    .order-summary {
+      background:var(--glass-bg); backdrop-filter:blur(16px);
+      border:1.5px solid var(--glass-border); border-radius:var(--radius); padding:1.5rem; box-shadow:var(--shadow);
+    }
+    .os-title { font-size:.9rem; font-weight:700; margin-bottom:1.1rem; display:flex; align-items:center; gap:.4rem; }
+    .os-row   { display:flex; justify-content:space-between; align-items:center; font-size:.83rem; color:var(--text-mid); margin-bottom:.6rem; }
+    .os-row strong { color:var(--text-dark); font-weight:600; }
+    .os-divider { height:1px; background:rgba(200,180,220,.22); margin:.8rem 0; }
+    .os-total { display:flex; justify-content:space-between; align-items:center; font-size:.95rem; font-weight:700; }
+    .os-total-price {
+      font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:900;
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+
+    .security-badges { display:flex; justify-content:center; gap:1rem; flex-wrap:wrap; margin-top:1rem; }
+    .sec-badge { display:flex; align-items:center; gap:.3rem; font-size:.72rem; color:var(--text-light); font-weight:500; }
+
+    .submit-btn {
+      width:100%; padding:1rem; border:none; border-radius:50px;
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      color:#fff; font-family:'DM Sans','Noto Sans Tamil',sans-serif;
+      font-size:1rem; font-weight:700; cursor:pointer;
+      box-shadow:0 6px 28px rgba(160,80,180,.35);
+      transition:transform .2s, filter .2s; margin-top:.5rem;
+    }
+    .submit-btn:hover { transform:translateY(-2px); filter:brightness(1.07); }
+
+    .success-screen {
+      display:none; position:fixed; inset:0; z-index:200;
+      background:linear-gradient(135deg,rgba(253,232,240,.97),rgba(232,234,255,.97));
+      backdrop-filter:blur(20px);
+      align-items:center; justify-content:center;
+      flex-direction:column; text-align:center; padding:2rem;
+      overflow-y:auto;
+    }
+    .success-screen.show { display:flex; animation:fadeUp .5s ease both; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+    .success-icon { font-size:5rem; margin-bottom:1.2rem; animation:bounce .6s .2s ease both; }
+    @keyframes bounce { 0%{transform:scale(0);} 70%{transform:scale(1.2);} 100%{transform:scale(1);} }
+    .success-screen h2 { font-family:'Playfair Display',serif; font-size:2rem; font-weight:900; margin-bottom:.6rem; }
+    .success-screen p  { font-size:.97rem; color:var(--text-mid); max-width:400px; margin:0 auto 2rem; line-height:1.7; }
+
+    .ticket-card {
+      background:var(--glass-bg); backdrop-filter:blur(20px);
+      border:1.5px solid var(--glass-border);
+      border-radius:24px; padding:2rem; max-width:380px; width:100%;
+      box-shadow:var(--shadow); margin-bottom:2rem; position:relative;
+    }
+    .ticket-card::before { content:''; position:absolute; left:-1px; top:50%; transform:translateY(-50%); width:20px; height:20px; border-radius:50%; background:linear-gradient(135deg,#fde8f0,#fef3e2); }
+    .ticket-card::after  { content:''; position:absolute; right:-1px; top:50%; transform:translateY(-50%); width:20px; height:20px; border-radius:50%; background:linear-gradient(135deg,#e8eaff,#e0f7f4); }
+    .tc-event  { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:800; margin-bottom:.8rem; }
+    .tc-meta   { font-size:.82rem; color:var(--text-mid); display:flex; flex-direction:column; gap:.3rem; margin-bottom:1rem; }
+    .tc-divider{ border:none; border-top:2px dashed rgba(200,180,220,.35); margin:.9rem 0; }
+    .tc-id     { display:flex; justify-content:space-between; align-items:center; }
+    .tc-id-label{ font-size:.72rem; color:var(--text-light); }
+    .tc-id-num  { font-size:.88rem; font-weight:700; color:#a070d0; letter-spacing:.05em; }
+    .qr-box { width:80px; height:80px; border-radius:12px; background:linear-gradient(135deg,#3a2a3e,#a070d0); display:flex; align-items:center; justify-content:center; font-size:2rem; margin:0 auto .8rem; }
+    .success-actions { display:flex; gap:.9rem; flex-wrap:wrap; justify-content:center; }
+
+    footer {
+      position:relative; z-index:1;
+      background:rgba(255,248,245,.72); backdrop-filter:blur(16px);
+      border-top:1px solid var(--glass-border);
+      padding:3rem 5% 1.5rem;
+      display:flex; flex-wrap:wrap; gap:2rem;
+      justify-content:space-between; align-items:flex-start;
+    }
+    .footer-brand p { font-size:.85rem; color:var(--text-light); margin-top:.5rem; max-width:220px; }
+    .footer-links h4 { font-size:.88rem; font-weight:700; margin-bottom:.8rem; }
+    .footer-links a  { display:block; font-size:.83rem; color:var(--text-mid); text-decoration:none; margin-bottom:.4rem; transition:color .2s; }
+    .footer-links a:hover { color:var(--text-dark); }
+    .footer-bottom { width:100%; border-top:1px solid rgba(200,180,220,.25); padding-top:1rem; margin-top:1rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.5rem; }
+    .footer-bottom p { font-size:.78rem; color:var(--text-light); }
+
+    .toast {
+      position:fixed; bottom:2rem; right:2rem; z-index:999;
+      background:var(--glass-bg); backdrop-filter:blur(20px);
+      border:1.5px solid var(--glass-border); border-radius:16px; padding:1rem 1.5rem;
+      box-shadow:0 12px 40px rgba(160,100,180,.25);
+      display:flex; align-items:center; gap:.8rem;
+      transform:translateY(100px); opacity:0;
+      transition:all .4s cubic-bezier(.34,1.56,.64,1); pointer-events:none;
+    }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast-icon { font-size:1.4rem; }
+    .toast-text h4 { font-size:.9rem; font-weight:700; }
+    .toast-text p  { font-size:.78rem; color:var(--text-mid); }
+
+    @media(max-width:900px) { .reg-layout { grid-template-columns:1fr; } .reg-right { position:static; } }
+    @media(max-width:600px) { .form-row { grid-template-columns:1fr; } .card-row { grid-template-columns:1fr; } footer { flex-direction:column; } }
+  </style>
+</head>
+<body>
+
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <nav>
+    <a href="/home/" class="nav-logo">Eventra</a>
+    <ul class="nav-links">
+      <li><a href="/home/" data-i18n="nav_home">Home</a></li>
+      <li><a href="/events/" data-i18n="nav_events">Events</a></li>
+      <li><a href="/add-event/" data-i18n="nav_add">Add Event</a></li>
+      <li><a href="/dashboard/" data-i18n="nav_dashboard">Dashboard</a></li>
+    </ul>
+    <div style="display:flex;gap:.8rem;align-items:center;">
+      <div class="lang-toggle">
+        <button class="lang-btn active" id="btnEN" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" id="btnTA" onclick="setLang('ta')">தமிழ்</button>
+      </div>
+      <a href="/events/" class="btn btn-primary" data-i18n="back_btn">← Back to Events</a>
+    </div>
+  </nav>
+
+  <div class="breadcrumb">
+    <a href="/home/" data-i18n="nav_home">Home</a><span>›</span>
+    <a href="/events/" data-i18n="nav_events">Events</a><span>›</span>
+    <a href="/event-details/" data-i18n="nav_event_details">UI / UX Masterclass 2025</a><span>›</span>
+    <span style="color:var(--text-dark);" data-i18n="breadcrumb_register">Register</span>
+  </div>
+
+  <!-- PROGRESS BAR -->
+  <div class="reg-progress">
+    <div class="rp-step active" id="step1" onclick="goToStep(1)">
+      <div class="rp-circle">1</div>
+      <div class="rp-label" data-i18n="step1_label">Your Details</div>
+    </div>
+    <div class="rp-line" id="line1"></div>
+    <div class="rp-step" id="step2" onclick="goToStep(2)">
+      <div class="rp-circle">2</div>
+      <div class="rp-label" data-i18n="step2_label">Tickets</div>
+    </div>
+    <div class="rp-line" id="line2"></div>
+    <div class="rp-step" id="step3" onclick="goToStep(3)">
+      <div class="rp-circle">3</div>
+      <div class="rp-label" data-i18n="step3_label">Payment</div>
+    </div>
+    <div class="rp-line" id="line3"></div>
+    <div class="rp-step" id="step4" onclick="goToStep(4)">
+      <div class="rp-circle">4</div>
+      <div class="rp-label" data-i18n="step4_label">Confirmed</div>
+    </div>
+  </div>
+
+  <div class="reg-layout">
+
+    <!-- LEFT COLUMN -->
+    <div class="form-left">
+
+      <!-- STEP 1 -->
+      <div class="glass-card" id="cardStep1">
+        <div class="card-title">👤 <span data-i18n="step1_title">Your Details</span></div>
+        <div class="form-row">
+          <div class="form-group" style="margin:0;">
+            <label><span data-i18n="label_fname">First Name</span> <span class="required">*</span></label>
+            <input type="text" id="firstName" data-i18n-ph="ph_fname" placeholder="Enter First Name" oninput="validateName(this)"/>
+            <div class="field-msg" id="firstNameMsg"></div>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label><span data-i18n="label_lname">Last Name</span> <span class="required">*</span></label>
+            <input type="text" id="lastName" data-i18n-ph="ph_lname" placeholder="Enter Last Name" oninput="validateName(this)"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label><span data-i18n="label_email">Email Address</span> <span class="required">*</span></label>
+          <div class="input-icon-wrap">
+            <span class="input-icon">✉️</span>
+            <input type="email" id="emailInput" data-i18n-ph="ph_email" placeholder="Enter Email Address" oninput="validateEmail(this)"/>
+          </div>
+          <div class="field-msg" id="emailMsg"></div>
+        </div>
+        <div class="form-group">
+          <label><span data-i18n="label_phone">Phone Number</span> <span class="required">*</span></label>
+          <div class="input-icon-wrap">
+            <span class="input-icon">📱</span>
+            <input type="tel" id="phoneInput" data-i18n-ph="ph_phone" placeholder="Enter Phone Number" oninput="validatePhone(this)"/>
+          </div>
+          <div class="field-msg" id="phoneMsg"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="margin:0;">
+            <label data-i18n="label_dob">Date of Birth</label>
+            <input type="date" id="dob"/>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label data-i18n="label_gender">Gender</label>
+            <select>
+              <option value="" data-i18n="gender_opt0">Prefer not to say</option>
+              <option data-i18n="gender_opt1">Female</option>
+              <option data-i18n="gender_opt2">Male</option>
+              <option data-i18n="gender_opt3">Non-binary</option>
+              <option data-i18n="gender_opt4">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_org">Organisation / Company</label>
+          <div class="input-icon-wrap">
+            <span class="input-icon">🏢</span>
+            <input type="text" data-i18n-ph="ph_org" placeholder="e.g. Google, Freelancer, Student"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_role">Designation / Role</label>
+          <input type="text" data-i18n-ph="ph_role" placeholder="e.g. UI Designer, Developer, Student"/>
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_hear">How did you hear about this event?</label>
+          <select>
+            <option value="" data-i18n="hear_opt0">Select an option…</option>
+            <option data-i18n="hear_opt1">Social Media</option>
+            <option data-i18n="hear_opt2">Friend / Colleague</option>
+            <option data-i18n="hear_opt3">Email Newsletter</option>
+            <option data-i18n="hear_opt4">Google Search</option>
+            <option data-i18n="hear_opt5">Eventra Platform</option>
+            <option data-i18n="hear_opt6">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="label_notes">Special Requirements / Notes</label>
+          <textarea data-i18n-ph="ph_notes" placeholder="Any dietary requirements, accessibility needs, or questions for the organiser…"></textarea>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:1rem;">
+          <button class="btn btn-primary" onclick="nextStep()" data-i18n="btn_continue_ticket">Continue → Tickets</button>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="glass-card" id="cardStep2" style="display:none;">
+        <div class="card-title">🎟 <span data-i18n="step2_title">Choose Your Ticket</span></div>
+        <div class="ticket-options">
+          <div class="ticket-opt selected" onclick="selectTicket(this,499,'General Admission')">
+            <div class="to-left">
+              <div class="to-radio"></div>
+              <div class="to-info">
+                <h4><span data-i18n="ticket1_name">General Admission</span> <span class="to-badge" data-i18n="badge_popular">Most Popular</span></h4>
+                <p data-i18n="ticket1_desc">Full-day access · Lunch included · Certificate</p>
+              </div>
+            </div>
+            <div class="to-price">₹499</div>
+          </div>
+          <div class="ticket-opt" onclick="selectTicket(this,299,'Early Bird')">
+            <div class="to-left">
+              <div class="to-radio"></div>
+              <div class="to-info">
+                <h4><span data-i18n="ticket2_name">Early Bird</span> <span class="to-badge" data-i18n="badge_limited">Limited</span></h4>
+                <p data-i18n="ticket2_desc">Full access · Discount pricing · 10 seats left</p>
+              </div>
+            </div>
+            <div class="to-price">₹299</div>
+          </div>
+          <div class="ticket-opt" onclick="selectTicket(this,899,'VIP')">
+            <div class="to-left">
+              <div class="to-radio"></div>
+              <div class="to-info">
+                <h4><span data-i18n="ticket3_name">VIP Pass ✨</span></h4>
+                <p data-i18n="ticket3_desc">Front row · Exclusive networking dinner · Signed kit</p>
+              </div>
+            </div>
+            <div class="to-price">₹899</div>
+          </div>
+        </div>
+
+        <div class="qty-row">
+          <span class="qty-label" data-i18n="label_qty">Number of Tickets</span>
+          <div class="qty-ctrl">
+            <button class="qty-btn" onclick="changeQty(-1)">−</button>
+            <div class="qty-num" id="qtyNum">1</div>
+            <button class="qty-btn" onclick="changeQty(1)">+</button>
+          </div>
+        </div>
+
+        <div style="margin-top:1.5rem;">
+          <div style="font-size:.85rem;font-weight:700;color:var(--text-dark);margin-bottom:.9rem;">🛍 <span data-i18n="addons_title">Add-ons (Optional)</span></div>
+          <div class="addons-grid">
+            <div class="addon-card" onclick="toggleAddon(this,99)">
+              <div class="addon-icon">🍱</div><div class="addon-name" data-i18n="addon1">Premium Lunch</div><div class="addon-price">+₹99</div>
+            </div>
+            <div class="addon-card" onclick="toggleAddon(this,149)">
+              <div class="addon-icon">📦</div><div class="addon-name" data-i18n="addon2">Swag Kit</div><div class="addon-price">+₹149</div>
+            </div>
+            <div class="addon-card" onclick="toggleAddon(this,199)">
+              <div class="addon-icon">📹</div><div class="addon-name" data-i18n="addon3">Recording Access</div><div class="addon-price">+₹199</div>
+            </div>
+            <div class="addon-card" onclick="toggleAddon(this,249)">
+              <div class="addon-icon">🎓</div><div class="addon-name" data-i18n="addon4">Workshop Materials</div><div class="addon-price">+₹249</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;margin-top:1.5rem;">
+          <button class="btn btn-ghost" onclick="prevStep()" data-i18n="btn_back">← Back</button>
+          <button class="btn btn-primary" onclick="nextStep()" data-i18n="btn_continue_pay">Continue → Payment</button>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="glass-card" id="cardStep3" style="display:none;">
+        <div class="card-title">💳 <span data-i18n="step3_title">Payment Details</span></div>
+        <div class="payment-methods">
+          <div class="pay-opt active" onclick="selectPay(this)">
+            <div class="pay-icon">💳</div><div class="pay-label" data-i18n="pay_card">Card</div>
+          </div>
+          <div class="pay-opt" onclick="selectPay(this)">
+            <div class="pay-icon">📱</div><div class="pay-label" data-i18n="pay_upi">UPI</div>
+          </div>
+          <div class="pay-opt" onclick="selectPay(this)">
+            <div class="pay-icon">🏦</div><div class="pay-label" data-i18n="pay_netbank">Net Banking</div>
+          </div>
+          <div class="pay-opt" onclick="selectPay(this)">
+            <div class="pay-icon">💰</div><div class="pay-label" data-i18n="pay_wallet">Wallet</div>
+          </div>
+        </div>
+
+        <div class="card-fields">
+          <div class="form-group" style="margin:0;">
+            <label><span data-i18n="label_card_name">Cardholder Name</span> <span class="required">*</span></label>
+            <input type="text" data-i18n-ph="ph_card_name" placeholder="Name as on card"/>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label><span data-i18n="label_card_num">Card Number</span> <span class="required">*</span></label>
+            <div class="input-icon-wrap">
+              <span class="input-icon">💳</span>
+              <input type="text" id="cardNum" placeholder="1234  5678  9012  3456" maxlength="19" oninput="formatCard(this)"/>
+            </div>
+          </div>
+          <div class="card-row">
+            <div class="form-group" style="margin:0;">
+              <label><span data-i18n="label_expiry">Expiry Date</span> <span class="required">*</span></label>
+              <input type="text" data-i18n-ph="ph_expiry" placeholder="MM / YY" maxlength="7" oninput="formatExpiry(this)"/>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label><span data-i18n="label_cvv">CVV</span> <span class="required">*</span></label>
+              <input type="text" placeholder="•••" maxlength="3"/>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:1.5rem;">
+          <div class="check-row" onclick="toggleCheck(this)">
+            <div class="custom-check"></div>
+            <span data-i18n="check1">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a> of Eventra.</span>
+          </div>
+          <div class="check-row" onclick="toggleCheck(this)">
+            <div class="custom-check"></div>
+            <span data-i18n="check2">I consent to receiving event updates and reminders via email and SMS.</span>
+          </div>
+          <div class="check-row" onclick="toggleCheck(this)">
+            <div class="custom-check checked"></div>
+            <span data-i18n="check3">Save my details for faster registration next time.</span>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-start;margin-top:1.5rem;">
+          <button class="btn btn-ghost" onclick="prevStep()" data-i18n="btn_back">← Back</button>
+        </div>
+      </div>
+
+    </div><!-- END .form-left -->
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="reg-right">
+      <div class="event-summary">
+        <div class="es-banner">🎨</div>
+        <div class="es-body">
+          <div class="es-tag" data-i18n="event_tag">Workshop</div>
+          <div class="es-title">UI / UX Masterclass 2025</div>
+          <div class="es-meta">
+            <span>📅 28 August 2025, 10:00 AM</span>
+            <span>📍 Design Hub, Bandra, Mumbai</span>
+            <span data-i18n="event_duration">⏱ 7 Hours · In-Person + Live Stream</span>
+            <span data-i18n="event_org">👤 Organised by DesignCircle India</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="order-summary">
+        <div class="os-title">🧾 <span data-i18n="order_title">Order Summary</span></div>
+        <div class="os-row">
+          <span id="ticketLabel">General Admission × 1</span>
+          <strong id="ticketSubtotal">₹499</strong>
+        </div>
+        <div class="os-row" id="addonRow" style="display:none;">
+          <span data-i18n="addons_label">Add-ons</span>
+          <strong id="addonTotal">₹0</strong>
+        </div>
+        <div class="os-row">
+          <span data-i18n="platform_fee">Platform Fee</span><strong>₹25</strong>
+        </div>
+        <div class="os-row">
+          <span data-i18n="gst_label">GST (18%)</span><strong id="gstAmt">₹94</strong>
+        </div>
+        <div class="os-divider"></div>
+        <div class="os-total">
+          <span data-i18n="total_label">Total</span>
+          <span class="os-total-price" id="grandTotal">₹618</span>
+        </div>
+        <div id="submitWrap" style="display:none;">
+          <button class="submit-btn" onclick="submitRegistration()" data-i18n="btn_complete">🎟 Complete Registration</button>
+        </div>
+        <div class="security-badges">
+          <div class="sec-badge" data-i18n="badge_ssl">🔒 SSL Secure</div>
+          <div class="sec-badge" data-i18n="badge_confirm">✅ Instant Confirmation</div>
+          <div class="sec-badge" data-i18n="badge_cancel">↩️ Free Cancellation</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- END .reg-layout -->
+
+  <!-- SUCCESS SCREEN -->
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">🎉</div>
+    <h2 data-i18n="success_title">You're Registered!</h2>
+    <p data-i18n="success_msg">Congratulations! Your spot at <strong>UI / UX Masterclass 2025</strong> is confirmed. Check your email for your e-ticket and QR code.</p>
+    <div class="ticket-card">
+      <div style="text-align:center;margin-bottom:1rem;">
+        <div class="qr-box">📱</div>
+        <div style="font-size:.72rem;color:var(--text-light);" data-i18n="qr_scan">Scan at entry</div>
+      </div>
+      <div class="tc-event">UI / UX Masterclass 2026</div>
+      <div class="tc-meta">
+        <span>📅 28 August 2026 · 10:00 AM</span>
+        <span>📍 Design Hub, Bandra, Mumbai</span>
+        <span>🎟 <span data-i18n="ticket1_name">General Admission</span> · 1 <span data-i18n="ticket_count">Ticket</span></span>
+      </div>
+      <hr class="tc-divider"/>
+      <div class="tc-id">
+        <div>
+          <div class="tc-id-label" data-i18n="booking_id">Booking ID</div>
+          <div class="tc-id-num" id="bookingId">EVT-2026-0847</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="tc-id-label" data-i18n="amount_paid">Amount Paid</div>
+          <div class="tc-id-num" id="paidAmt">₹618</div>
+        </div>
+      </div>
+    </div>
+    <div class="success-actions">
+      <button class="btn btn-primary" onclick="window.print()" data-i18n="btn_download">🖨 Download Ticket</button>
+      <a href="/events/" class="btn btn-ghost" data-i18n="btn_browse">Browse More Events</a>
+      <a href="/home/" class="btn btn-ghost" data-i18n="btn_home">Go Home</a>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast">
+    <div class="toast-icon" id="toastIcon">⚠️</div>
+    <div class="toast-text">
+      <h4 id="toastTitle">Missing Info</h4>
+      <p id="toastMsg">Please fill in all required fields.</p>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-brand">
+      <a href="/home/" class="nav-logo" style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;background:linear-gradient(135deg,#e07090,#a070d0,#50b8d8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none;">Eventra</a>
+      <p data-i18n="footer_tagline">Smart event management designed for the modern creator.</p>
+    </div>
+    <div class="footer-links">
+      <h4 data-i18n="footer_product">Product</h4>
+      <a href="/events/" data-i18n="nav_events">Browse Events</a>
+      <a href="/add-event/" data-i18n="footer_create">Create Event</a>
+      <a href="/dashboard/" data-i18n="nav_dashboard">Dashboard</a>
+    </div>
+    <div class="footer-links">
+      <h4 data-i18n="footer_company">Company</h4>
+      <a href="#" data-i18n="footer_about">About Us</a>
+      <a href="#" data-i18n="footer_blog">Blog</a>
+      <a href="#" data-i18n="footer_careers">Careers</a>
+    </div>
+    <div class="footer-links">
+      <h4 data-i18n="footer_support">Support</h4>
+      <a href="#" data-i18n="footer_help">Help Centre</a>
+      <a href="#" data-i18n="footer_privacy">Privacy Policy</a>
+      <a href="#" data-i18n="footer_terms">Terms of Service</a>
+    </div>
+    <div class="footer-bottom">
+      <p data-i18n="footer_copy">© 2025 Eventra. Crafted with ♥ for event creators everywhere.</p>
+      <p>🌍 All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    // ============================================================
+    // TRANSLATIONS
+    // ============================================================
+    const i18n = {
+      en: {
+        nav_home: "Home", nav_events: "Events", nav_add: "Add Event", nav_dashboard: "Dashboard",
+        back_btn: "← Back to Events",
+        breadcrumb_register: "Register",
+        step1_label: "Your Details", step2_label: "Tickets", step3_label: "Payment", step4_label: "Confirmed",
+        step1_title: "Your Details", step2_title: "Choose Your Ticket", step3_title: "Payment Details",
+        label_fname: "First Name", label_lname: "Last Name", label_email: "Email Address",
+        label_phone: "Phone Number", label_dob: "Date of Birth", label_gender: "Gender",
+        label_org: "Organisation / Company", label_role: "Designation / Role",
+        label_hear: "How did you hear about this event?", label_notes: "Special Requirements / Notes",
+        ph_fname: "Enter First Name", ph_lname: "Enter Last Name", ph_email: "Enter Email Address",
+        ph_phone: "Enter Phone Number", ph_org: "e.g. Google, Freelancer, Student",
+        ph_role: "e.g. UI Designer, Developer, Student",
+        ph_notes: "Any dietary requirements, accessibility needs, or questions for the organiser…",
+        gender_opt0: "Prefer not to say", gender_opt1: "Female", gender_opt2: "Male",
+        gender_opt3: "Non-binary", gender_opt4: "Other",
+        hear_opt0: "Select an option…", hear_opt1: "Social Media", hear_opt2: "Friend / Colleague",
+        hear_opt3: "Email Newsletter", hear_opt4: "Google Search", hear_opt5: "Eventra Platform", hear_opt6: "Other",
+        ticket1_name: "General Admission", ticket1_desc: "Full-day access · Lunch included · Certificate",
+        ticket2_name: "Early Bird", ticket2_desc: "Full access · Discount pricing · 10 seats left",
+        ticket3_name: "VIP Pass ✨", ticket3_desc: "Front row · Exclusive networking dinner · Signed kit",
+        badge_popular: "Most Popular", badge_limited: "Limited",
+        label_qty: "Number of Tickets",
+        addons_title: "Add-ons (Optional)", addons_label: "Add-ons",
+        addon1: "Premium Lunch", addon2: "Swag Kit", addon3: "Recording Access", addon4: "Workshop Materials",
+        event_tag: "Workshop",
+        event_duration: "⏱ 7 Hours · In-Person + Live Stream",
+        event_org: "👤 Organised by DesignCircle India",
+        order_title: "Order Summary", platform_fee: "Platform Fee", gst_label: "GST (18%)", total_label: "Total",
+        badge_ssl: "🔒 SSL Secure", badge_confirm: "✅ Instant Confirmation", badge_cancel: "↩️ Free Cancellation",
+        pay_card: "Card", pay_upi: "UPI", pay_netbank: "Net Banking", pay_wallet: "Wallet",
+        label_card_name: "Cardholder Name", label_card_num: "Card Number",
+        label_expiry: "Expiry Date", label_cvv: "CVV",
+        ph_card_name: "Name as on card", ph_expiry: "MM / YY",
+        check1: 'I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a> of Eventra.',
+        check2: "I consent to receiving event updates and reminders via email and SMS.",
+        check3: "Save my details for faster registration next time.",
+        btn_continue_ticket: "Continue → Tickets", btn_continue_pay: "Continue → Payment",
+        btn_back: "← Back", btn_complete: "🎟 Complete Registration",
+        success_title: "You're Registered!",
+        success_msg: "Congratulations! Your spot at <strong>UI / UX Masterclass 2025</strong> is confirmed. Check your email for your e-ticket and QR code.",
+        qr_scan: "Scan at entry", booking_id: "Booking ID", amount_paid: "Amount Paid", ticket_count: "Ticket",
+        btn_download: "🖨 Download Ticket", btn_browse: "Browse More Events", btn_home: "Go Home",
+        footer_tagline: "Smart event management designed for the modern creator.",
+        footer_product: "Product", footer_create: "Create Event", footer_company: "Company",
+        footer_about: "About Us", footer_blog: "Blog", footer_careers: "Careers",
+        footer_support: "Support", footer_help: "Help Centre", footer_privacy: "Privacy Policy",
+        footer_terms: "Terms of Service",
+        footer_copy: "© 2026 Eventra. Crafted with ♥ for event creators everywhere.",
+        toast_missing_name_title: "Missing Name", toast_missing_name_msg: "Please enter your first name.",
+        toast_invalid_email_title: "Invalid Email", toast_invalid_email_msg: "Please enter a valid email address.",
+        toast_missing_phone_title: "Missing Phone", toast_missing_phone_msg: "Please enter your phone number.",
+        valid_email: "✓ Looks good!", invalid_email: "Please enter a valid email.",
+        valid_phone: "✓ Valid number", invalid_phone: "Enter a valid phone number."
+      },
+      ta: {
+        nav_home: "முகப்பு", nav_events: "நிகழ்வுகள்", nav_add: "நிகழ்வு சேர்", nav_dashboard: "டாஷ்போர்டு",
+        back_btn: "← நிகழ்வுகளுக்கு திரும்பு",
+        breadcrumb_register: "பதிவு செய்",
+        step1_label: "உங்கள் விவரங்கள்", step2_label: "டிக்கெட்டுகள்", step3_label: "கட்டணம்", step4_label: "உறுதிப்படுத்தல்",
+        step1_title: "உங்கள் விவரங்கள்", step2_title: "டிக்கெட் தேர்வு செய்யுங்கள்", step3_title: "கட்டண விவரங்கள்",
+        label_fname: "முதல் பெயர்", label_lname: "கடைசி பெயர்", label_email: "மின்னஞ்சல் முகவரி",
+        label_phone: "தொலைபேசி எண்", label_dob: "பிறந்த தேதி", label_gender: "பாலினம்",
+        label_org: "நிறுவனம் / நிர்வாகம்", label_role: "பதவி / பங்கு",
+        label_hear: "இந்த நிகழ்வை எப்படி அறிந்தீர்கள்?", label_notes: "சிறப்புத் தேவைகள் / குறிப்புகள்",
+        ph_fname: "முதல் பெயர் உள்ளிடுக", ph_lname: "கடைசி பெயர் உள்ளிடுக",
+        ph_email: "மின்னஞ்சல் முகவரி உள்ளிடுக", ph_phone: "தொலைபேசி எண் உள்ளிடுக",
+        ph_org: "எ.கா. Google, சுயதொழில், மாணவர்", ph_role: "எ.கா. UI வடிவமைப்பாளர், டெவலப்பர், மாணவர்",
+        ph_notes: "உணவு தேவைகள், அணுகல் தேவைகள் அல்லது ஏதேனும் கேள்விகள்…",
+        gender_opt0: "சொல்ல விரும்பவில்லை", gender_opt1: "பெண்", gender_opt2: "ஆண்",
+        gender_opt3: "நான்-பைனரி", gender_opt4: "மற்றவை",
+        hear_opt0: "ஒரு விருப்பத்தை தேர்வு செய்க…", hear_opt1: "சமூக ஊடகம்",
+        hear_opt2: "நண்பர் / சக பணியாளர்", hear_opt3: "மின்னஞ்சல் செய்திமடல்",
+        hear_opt4: "கூகிள் தேடல்", hear_opt5: "Eventra தளம்", hear_opt6: "மற்றவை",
+        ticket1_name: "பொது அனுமதி", ticket1_desc: "முழு நாள் அணுகல் · மதிய உணவு உட்பட · சான்றிதழ்",
+        ticket2_name: "அர்லி பர்ட்", ticket2_desc: "முழு அணுகல் · தள்ளுபடி விலை · 10 இடங்கள் மட்டுமே",
+        ticket3_name: "VIP பாஸ் ✨", ticket3_desc: "முன் வரிசை · சிறப்பு நெட்வொர்கிங் இரவு உணவு · கையொப்பமிட்ட கிட்",
+        badge_popular: "மிகவும் பிரபலம்", badge_limited: "வரையறுக்கப்பட்டது",
+        label_qty: "டிக்கெட்டுகளின் எண்ணிக்கை",
+        addons_title: "கூடுதல் சேவைகள் (விருப்பமானது)", addons_label: "கூடுதல் சேவைகள்",
+        addon1: "பிரீமியம் மதிய உணவு", addon2: "சுவாக் கிட்", addon3: "பதிவு அணுகல்", addon4: "பட்டறை பொருட்கள்",
+        event_tag: "பட்டறை",
+        event_duration: "⏱ 7 மணி நேரம் · நேரடி + நேரலை",
+        event_org: "👤 DesignCircle India ஏற்பாடு செய்தது",
+        order_title: "ஆர்டர் சுருக்கம்", platform_fee: "தள கட்டணம்", gst_label: "ஜிஎஸ்டி (18%)", total_label: "மொத்தம்",
+        badge_ssl: "🔒 SSL பாதுகாப்பு", badge_confirm: "✅ உடனடி உறுதிப்படுத்தல்", badge_cancel: "↩️ இலவச ரத்து",
+        pay_card: "கார்டு", pay_upi: "UPI", pay_netbank: "நெட் பேங்கிங்", pay_wallet: "வாலட்",
+        label_card_name: "கார்டு வைத்திருப்பவர் பெயர்", label_card_num: "கார்டு எண்",
+        label_expiry: "காலாவதி தேதி", label_cvv: "CVV",
+        ph_card_name: "கார்டில் உள்ள பெயர்", ph_expiry: "மாதம் / ஆண்டு",
+        check1: 'Eventra இன் <a href="#">சேவை விதிமுறைகள்</a> மற்றும் <a href="#">தனியுரிமைக் கொள்கை</a>க்கு நான் சம்மதிக்கிறேன்.',
+        check2: "மின்னஞ்சல் மற்றும் SMS மூலம் நிகழ்வு புதுப்பிப்புகள் பெற சம்மதிக்கிறேன்.",
+        check3: "அடுத்த முறை வேகமான பதிவிற்காக என் விவரங்களை சேமி.",
+        btn_continue_ticket: "தொடர்க → டிக்கெட்டுகள்", btn_continue_pay: "தொடர்க → கட்டணம்",
+        btn_back: "← திரும்பு", btn_complete: "🎟 பதிவை முடி",
+        success_title: "பதிவு வெற்றி!",
+        success_msg: "வாழ்த்துக்கள்! <strong>UI / UX Masterclass 2026</strong>-இல் உங்கள் இடம் உறுதிப்படுத்தப்பட்டது. உங்கள் மின்னஞ்சலில் டிக்கெட் மற்றும் QR குறியீட்டை சரிபாருங்கள்.",
+        qr_scan: "நுழைவாயிலில் ஸ்கேன் செய்க", booking_id: "முன்பதிவு ஐடி", amount_paid: "செலுத்திய தொகை", ticket_count: "டிக்கெட்",
+        btn_download: "🖨 டிக்கெட் பதிவிறக்கு", btn_browse: "மேலும் நிகழ்வுகள் காண்க", btn_home: "முகப்புக்கு செல்",
+        footer_tagline: "நவீன படைப்பாளிகளுக்காக வடிவமைக்கப்பட்ட நிகழ்வு மேலாண்மை.",
+        footer_product: "தயாரிப்பு", footer_create: "நிகழ்வு உருவாக்கு", footer_company: "நிறுவனம்",
+        footer_about: "எங்களை பற்றி", footer_blog: "வலைப்பதிவு", footer_careers: "வேலைவாய்ப்புகள்",
+        footer_support: "ஆதரவு", footer_help: "உதவி மையம்", footer_privacy: "தனியுரிமைக் கொள்கை",
+        footer_terms: "சேவை விதிமுறைகள்",
+        footer_copy: "© 2026 Eventra. நிகழ்வு படைப்பாளிகளுக்காக ♥ உடன் உருவாக்கப்பட்டது.",
+        toast_missing_name_title: "பெயர் இல்லை", toast_missing_name_msg: "உங்கள் முதல் பெயரை உள்ளிடுக.",
+        toast_invalid_email_title: "தவறான மின்னஞ்சல்", toast_invalid_email_msg: "சரியான மின்னஞ்சல் முகவரியை உள்ளிடுக.",
+        toast_missing_phone_title: "தொலைபேசி இல்லை", toast_missing_phone_msg: "உங்கள் தொலைபேசி எண்ணை உள்ளிடுக.",
+        valid_email: "✓ சரியாக உள்ளது!", invalid_email: "சரியான மின்னஞ்சல் உள்ளிடுக.",
+        valid_phone: "✓ சரியான எண்", invalid_phone: "சரியான தொலைபேசி எண் உள்ளிடுக."
+      }
+    };
+
+    let currentLang = 'en';
+
+    function setLang(lang) {
+      currentLang = lang;
+      document.getElementById('btnEN').classList.toggle('active', lang === 'en');
+      document.getElementById('btnTA').classList.toggle('active', lang === 'ta');
+      document.documentElement.lang = lang;
+      const t = i18n[lang];
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t[key] !== undefined) el.innerHTML = t[key];
+      });
+      document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+        const key = el.getAttribute('data-i18n-ph');
+        if (t[key] !== undefined) el.placeholder = t[key];
+      });
+      document.querySelectorAll('option[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t[key] !== undefined) el.textContent = t[key];
+      });
+
+      document.body.style.fontFamily = lang === 'ta'
+        ? "'Noto Sans Tamil','DM Sans',sans-serif"
+        : "'DM Sans','Noto Sans Tamil',sans-serif";
+    }
+
+    // ============================================================
+    // ORIGINAL LOGIC (unchanged)
+    // ============================================================
+    let paymentStarted = false;
+    let basePrice = 499, ticketLabel = 'General Admission', qty = 1, addonTotal = 0;
+    const PLATFORM_FEE = 25;
+    let currentStep = 1;
+
+    function setStep(n) {
+      for (let i = 1; i <= 4; i++) {
+        const s = document.getElementById('step' + i);
+        if (!s) continue;
+        s.classList.remove('active', 'done');
+        if (i < n)   s.classList.add('done');
+        if (i === n) s.classList.add('active');
+      }
+      for (let i = 1; i <= 3; i++) {
+        const l = document.getElementById('line' + i);
+        if (!l) continue;
+        if (i < n) l.classList.add('done');
+        else       l.classList.remove('done');
+      }
+    }
+
+    function showStep(n) {
+      currentStep = n;
+      document.getElementById('cardStep1').style.display  = n === 1 ? 'block' : 'none';
+      document.getElementById('cardStep2').style.display  = n === 2 ? 'block' : 'none';
+      document.getElementById('cardStep3').style.display  = n === 3 ? 'block' : 'none';
+      document.getElementById('submitWrap').style.display = n === 3 ? 'block' : 'none';
+      setStep(n);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function validateStep1() {
+      const t = i18n[currentLang];
+      const fname = document.getElementById('firstName').value.trim();
+      const email = document.getElementById('emailInput').value.trim();
+      const phone = document.getElementById('phoneInput').value.trim();
+      if (!fname) { showToast('⚠️', t.toast_missing_name_title, t.toast_missing_name_msg); document.getElementById('firstName').focus(); return false; }
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('⚠️', t.toast_invalid_email_title, t.toast_invalid_email_msg); document.getElementById('emailInput').focus(); return false; }
+      if (!phone) { showToast('⚠️', t.toast_missing_phone_title, t.toast_missing_phone_msg); document.getElementById('phoneInput').focus(); return false; }
+      return true;
+    }
+
+    function goToStep(n) {
+      if (n === currentStep) return;
+      if (n < currentStep) { showStep(n); return; }
+      if (!validateStep1()) return;
+      if (n === 4) { submitRegistration(); return; }
+      showStep(n);
+    }
+
+    function nextStep() {
+      if (currentStep === 1 && !validateStep1()) return;
+      if (currentStep < 3) showStep(currentStep + 1);
+    }
+
+    function prevStep() {
+      if (currentStep > 1) showStep(currentStep - 1);
+    }
+
+    function calcTotal() {
+      const sub   = basePrice * qty + addonTotal;
+      const gst   = Math.round((sub + PLATFORM_FEE) * 0.18);
+      const total = sub + PLATFORM_FEE + gst;
+      document.getElementById('ticketLabel').textContent    = ticketLabel + ' × ' + qty;
+      document.getElementById('ticketSubtotal').textContent = '₹' + (basePrice * qty).toLocaleString('en-IN');
+      document.getElementById('gstAmt').textContent         = '₹' + gst.toLocaleString('en-IN');
+      document.getElementById('grandTotal').textContent     = '₹' + total.toLocaleString('en-IN');
+      document.getElementById('paidAmt').textContent        = '₹' + total.toLocaleString('en-IN');
+      if (addonTotal > 0) {
+        document.getElementById('addonRow').style.display = 'flex';
+        document.getElementById('addonTotal').textContent = '₹' + addonTotal.toLocaleString('en-IN');
+      } else {
+        document.getElementById('addonRow').style.display = 'none';
+      }
+    }
+
+    function selectTicket(el, price, label) {
+      document.querySelectorAll('.ticket-opt').forEach(t => t.classList.remove('selected'));
+      el.classList.add('selected');
+      basePrice = price; ticketLabel = label;
+      calcTotal();
+    }
+
+    function changeQty(d) {
+      qty = Math.max(1, Math.min(10, qty + d));
+      document.getElementById('qtyNum').textContent = qty;
+      calcTotal();
+    }
+
+    function toggleAddon(el, price) {
+      el.classList.toggle('checked');
+      addonTotal += el.classList.contains('checked') ? price : -price;
+      calcTotal();
+    }
+
+    function selectPay(el) {
+      document.querySelectorAll('.pay-opt').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function toggleCheck(row) {
+      row.querySelector('.custom-check').classList.toggle('checked');
+    }
+
+    function validateName(inp) {
+      inp.classList.toggle('input-valid',   inp.value.trim().length >= 2);
+      inp.classList.toggle('input-invalid', inp.value.trim().length > 0 && inp.value.trim().length < 2);
+    }
+    function validateEmail(inp) {
+      const t   = i18n[currentLang];
+      const ok  = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inp.value);
+      const msg = document.getElementById('emailMsg');
+      inp.classList.toggle('input-valid',   ok);
+      inp.classList.toggle('input-invalid', inp.value.length > 0 && !ok);
+      msg.textContent = inp.value.length > 0 ? (ok ? t.valid_email : t.invalid_email) : '';
+      msg.className   = 'field-msg ' + (ok ? 'ok' : 'err');
+    }
+    function validatePhone(inp) {
+      const t   = i18n[currentLang];
+      const ok  = /^[\+\d\s\-]{8,15}$/.test(inp.value);
+      const msg = document.getElementById('phoneMsg');
+      inp.classList.toggle('input-valid',   ok);
+      inp.classList.toggle('input-invalid', inp.value.length > 0 && !ok);
+      msg.textContent = inp.value.length > 0 ? (ok ? t.valid_phone : t.invalid_phone) : '';
+      msg.className   = 'field-msg ' + (ok ? 'ok' : 'err');
+    }
+
+    function formatCard(inp) {
+      let v = inp.value.replace(/\D/g,'').substring(0,16);
+      inp.value = v.replace(/(.{4})/g,'$1  ').trim();
+    }
+    function formatExpiry(inp) {
+      let v = inp.value.replace(/\D/g,'');
+      if (v.length >= 2) v = v.substring(0,2) + ' / ' + v.substring(2,4);
+      inp.value = v;
+    }
+
+    function showToast(icon, title, msg) {
+      document.getElementById('toastIcon').textContent  = icon;
+      document.getElementById('toastTitle').textContent = title;
+      document.getElementById('toastMsg').textContent   = msg;
+      const t = document.getElementById('toast');
+      t.classList.add('show');
+    }
+
+    // ── Captured from the form before payment opens ──
+    let _regName  = '';
+    let _regEmail = '';
+
+    function submitRegistration() {
+      if (paymentStarted) return;
+      paymentStarted = true;
+
+      const firstName = (document.getElementById('firstName')?.value || '').trim();
+      const lastName  = (document.getElementById('lastName')?.value  || '').trim();
+      _regName  = [firstName, lastName].filter(Boolean).join(' ') || 'Guest';
+      _regEmail = (document.getElementById('emailInput')?.value || '').trim();
+
+      let totalText = document.getElementById("grandTotal").textContent;
+      let amount = parseInt(totalText.replace(/[₹,]/g, "")) * 100;
+
+      var options = {
+        key: "rzp_test_SZOUfR1DBfztJW",
+        amount: amount,
+        currency: "INR",
+        name: "Eventra",
+        description: ticketLabel + " Ticket",
+        handler: function (response) {
+          console.log("PAYMENT SUCCESS");
+          showSuccess();
+        },
+      };
+
+      try {
+        var rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (response) {
+          console.log("PAYMENT FAILED");
+          alert("Payment failed, but ticket will still be generated.");
+          showSuccess();
+        });
+        rzp.open();
+      } catch(e) {
+        showSuccess();
+      }
+    }
+
+    let _successCalled = false;
+
+    async function showSuccess() {
+      if (_successCalled) return;
+      _successCalled = true;
+
+      setStep(4);
+      document.getElementById('successScreen').classList.add('show');
+      document.body.style.overflow = 'hidden';
+
+      const src = new URLSearchParams(window.location.search);
+      const rawDate   = src.get('date') || '';
+      const dateParts = rawDate.split('·').map(s => s.trim());
+      const eventDate = dateParts[0] || rawDate;
+      const eventTime = dateParts[1] || '';
+
+      const payload = {
+        name:          _regName,
+        email:         _regEmail,
+        eventTitle:    src.get('title')    || '',
+        eventDate:     eventDate,
+        eventTime:     eventTime,
+        eventLocation: src.get('location') || '',
+        organiser:     src.get('organiser')|| '',
+        ticketType:    ticketLabel,
+      };
+
+      let ticketId = null;
+
+      try {
+        console.log("CALLING DJANGO API");
+        const res = await fetch('http://127.0.0.1:8000/generate-ticket/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const json = await res.json();
+        console.log("API RESPONSE:", json);
+        if (json.success && json.ticketId) {
+          ticketId = json.ticketId;
+        } else {
+          alert("Ticket API failed!");
+        }
+      } catch (err) {
+        console.error("API ERROR:", err);
+        alert("Backend not reachable!");
+      }
+
+      if (!ticketId) ticketId = 'EVT-' + Math.random().toString(36).slice(2,10).toUpperCase();
+
+      const params = new URLSearchParams({
+        id:        ticketId,
+        name:      payload.name,
+        email:     payload.email,
+        title:     payload.eventTitle,
+        date:      payload.eventDate,
+        time:      payload.eventTime,
+        location:  payload.eventLocation,
+        organiser: payload.organiser,
+        type:      payload.ticketType,
+        price:     src.get('price')    || '',
+        category:  src.get('category') || '',
+        qty:       '1',
+        total:     '₹' + (src.get('price') || '0'),
+      });
+
+      document.getElementById('bookingId').textContent = ticketId;
+
+      setTimeout(() => {
+        window.location.href = '/ticket/?' + params.toString();
+      }, 2000);
+    }
+
+    calcTotal();
+    showStep(1);
+
+    function getEventData() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        title:    params.get("title"),
+        date:     params.get("date"),
+        location: params.get("location"),
+        price:    params.get("price"),
+        category: params.get("category")
+      };
+    }
+
+    function applyEventData() {
+      const event = getEventData();
+      if (!event.title) return;
+      document.title = event.title;
+      const breadcrumb = document.querySelector(".breadcrumb span:last-child");
+      if (breadcrumb) breadcrumb.textContent = event.title;
+      const eventTitle = document.querySelector(".es-title");
+      if (eventTitle) eventTitle.textContent = event.title;
+      const category = document.querySelector(".es-tag");
+      if (category) category.textContent = event.category;
+      const date = document.querySelector(".es-meta span:nth-child(1)");
+      if (date) date.innerHTML = "📅 " + event.date;
+      const location = document.querySelector(".es-meta span:nth-child(2)");
+      if (location) location.innerHTML = "📍 " + event.location;
+    }
+
+    window.addEventListener("load", applyEventData);
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Eventra – Reviews & Ratings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --rose:         #f4a7b9;
+      --peach:        #f9c784;
+      --lavender:     #c9b8f0;
+      --sky:          #a8d8f0;
+      --mint:         #aaecdc;
+      --glass-bg:     rgba(255,255,255,0.55);
+      --glass-border: rgba(255,255,255,0.75);
+      --shadow:       0 8px 40px rgba(180,120,140,0.18);
+      --text-dark:    #3a2a3e;
+      --text-mid:     #7a6080;
+      --text-light:   #b8a8c0;
+      --radius:       20px;
+      --nav-h:        72px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: linear-gradient(135deg, #fde8f0 0%, #fef3e2 30%, #e8eaff 65%, #e0f7f4 100%);
+      min-height: 100vh;
+      color: var(--text-dark);
+      overflow-x: hidden;
+    }
+
+    .blob { position:fixed; border-radius:50%; filter:blur(80px); opacity:.4; pointer-events:none; z-index:0; }
+    .blob-1 { width:420px; height:420px; background:var(--rose);     top:-100px; left:-100px; }
+    .blob-2 { width:340px; height:340px; background:var(--lavender); top:45%;   right:-80px; }
+    .blob-3 { width:280px; height:280px; background:var(--mint);     bottom:-60px; left:35%; }
+
+    /* ── LANGUAGE TOGGLE ── */
+    .lang-toggle {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1.5px solid var(--glass-border);
+      border-radius: 50px;
+      padding: .3rem .4rem;
+    }
+    .lang-btn {
+      padding: .32rem .85rem;
+      border-radius: 50px;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .25s;
+      background: transparent;
+      color: var(--text-mid);
+    }
+    .lang-btn.active {
+      background: linear-gradient(135deg, #e07090, #a070d0);
+      color: #fff;
+      box-shadow: 0 3px 12px rgba(160,80,180,.3);
+    }
+    .lang-btn:not(.active):hover {
+      color: var(--text-dark);
+      background: rgba(255,255,255,.5);
+    }
+
+    /* ── NAV ── */
+    nav {
+      position:fixed; top:0; left:0; right:0; z-index:100;
+      height:var(--nav-h);
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 5%;
+      background:rgba(255,248,245,0.72);
+      backdrop-filter:blur(18px);
+      border-bottom:1px solid var(--glass-border);
+      box-shadow:0 2px 24px rgba(200,140,160,0.10);
+    }
+    .nav-logo {
+      font-family:'Playfair Display',serif;
+      font-size:1.6rem; font-weight:900;
+      background:linear-gradient(135deg,#e07090,#a070d0,#50b8d8);
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+      text-decoration:none;
+    }
+    .nav-links { display:flex; gap:2rem; list-style:none; }
+    .nav-links a {
+      text-decoration:none; font-size:.95rem; font-weight:500;
+      color:var(--text-mid); transition:color .25s; position:relative;
+    }
+    .nav-links a::after {
+      content:''; position:absolute; bottom:-3px; left:0; right:0;
+      height:2px; border-radius:2px;
+      background:linear-gradient(90deg,var(--rose),var(--lavender));
+      transform:scaleX(0); transition:transform .25s;
+    }
+    .nav-links a:hover { color:var(--text-dark); }
+    .nav-links a:hover::after { transform:scaleX(1); }
+
+    .nav-right { display: flex; align-items: center; gap: 1rem; }
+
+    .btn {
+      display:inline-flex; align-items:center; gap:.5rem;
+      padding:.72rem 1.6rem; border:none; cursor:pointer;
+      border-radius:50px; font-family:'DM Sans',sans-serif;
+      font-size:.93rem; font-weight:600;
+      transition:transform .2s, box-shadow .2s, filter .2s;
+      text-decoration:none;
+    }
+    .btn:hover { transform:translateY(-2px); filter:brightness(1.06); }
+    .btn-primary {
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      color:#fff; box-shadow:0 6px 28px rgba(160,80,180,.35);
+    }
+    .btn-ghost {
+      background:var(--glass-bg); backdrop-filter:blur(10px);
+      border:1.5px solid var(--glass-border); color:var(--text-dark);
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      position:relative; z-index:1;
+      padding: calc(var(--nav-h) + 2rem) 5% 0;
+      display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:1rem;
+    }
+    .page-tag {
+      display:inline-flex; align-items:center; gap:.4rem;
+      font-size:.82rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+      color:var(--text-mid); margin-bottom:.5rem;
+    }
+    .page-tag::before {
+      content:''; display:block; width:20px; height:2px; border-radius:2px;
+      background:linear-gradient(90deg,var(--rose),var(--lavender));
+    }
+    .page-title {
+      font-family:'Playfair Display',serif;
+      font-size:clamp(1.8rem,4vw,2.8rem); font-weight:900;
+      line-height:1.15;
+    }
+    .page-subtitle { font-size:.95rem; color:var(--text-mid); margin-top:.5rem; }
+    .page-header-right { display:flex; gap:.8rem; }
+
+    /* ── MAIN CONTENT ── */
+    .reviews-page-layout {
+      position:relative; z-index:1;
+      display:grid;
+      grid-template-columns:1fr 340px;
+      gap:2rem;
+      padding:2.5rem 5% 5rem;
+      align-items:start;
+    }
+
+    /* ── GLASS CARD ── */
+    .glass-card {
+      background:var(--glass-bg); backdrop-filter:blur(16px);
+      border:1.5px solid var(--glass-border);
+      border-radius:var(--radius); padding:2rem;
+      box-shadow:var(--shadow);
+    }
+    .card-title {
+      font-family:'Playfair Display',serif;
+      font-size:1.15rem; font-weight:800;
+      margin-bottom:1.4rem; color:var(--text-dark);
+      display:flex; align-items:center; gap:.5rem;
+    }
+
+    /* ── LEFT COLUMN ── */
+    .reviews-left { display:flex; flex-direction:column; gap:2rem; }
+
+    /* ── SORT / FILTER BAR ── */
+    .filter-bar {
+      display:flex; align-items:center; gap:.8rem; flex-wrap:wrap;
+    }
+    .filter-bar-label { font-size:.83rem; font-weight:600; color:var(--text-mid); }
+    .filter-chips { display:flex; gap:.5rem; flex-wrap:wrap; }
+    .chip {
+      padding:.38rem .9rem; border-radius:50px; font-size:.8rem; font-weight:600;
+      border:1.5px solid var(--glass-border); background:var(--glass-bg);
+      color:var(--text-mid); cursor:pointer; transition:all .2s;
+    }
+    .chip.active, .chip:hover {
+      background:linear-gradient(135deg,#fde8f0,#e8eaff);
+      border-color:var(--lavender); color:var(--text-dark);
+    }
+    .chip.active { background:linear-gradient(135deg,#e07090,#a070d0); color:#fff; border-color:transparent; }
+    .sort-select {
+      margin-left:auto; padding:.38rem .9rem; border-radius:50px;
+      border:1.5px solid var(--glass-border); background:var(--glass-bg);
+      font-family:'DM Sans',sans-serif; font-size:.8rem; font-weight:600;
+      color:var(--text-mid); cursor:pointer; outline:none;
+      backdrop-filter:blur(10px);
+    }
+
+    /* ── REVIEW CARDS ── */
+    .review-list { display:flex; flex-direction:column; gap:1.2rem; }
+
+    .review-card {
+      background:var(--glass-bg); backdrop-filter:blur(16px);
+      border:1.5px solid var(--glass-border);
+      border-radius:18px; padding:1.6rem;
+      box-shadow:0 4px 24px rgba(180,120,140,0.10);
+      transition:transform .25s, box-shadow .25s;
+      position:relative; overflow:hidden;
+    }
+    .review-card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:3px;
+      background:linear-gradient(90deg,var(--rose),var(--lavender),var(--sky));
+      opacity:0; transition:opacity .25s;
+    }
+    .review-card:hover { transform:translateY(-3px); box-shadow:0 12px 40px rgba(160,100,180,.18); }
+    .review-card:hover::before { opacity:1; }
+
+    .review-card-top {
+      display:flex; align-items:flex-start; justify-content:space-between; gap:1rem;
+      margin-bottom:1rem; flex-wrap:wrap;
+    }
+    .review-user { display:flex; align-items:center; gap:.9rem; }
+    .review-av {
+      width:44px; height:44px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:.95rem; font-weight:800; color:#fff; flex-shrink:0;
+    }
+    .rav1{background:linear-gradient(135deg,var(--rose),var(--peach));}
+    .rav2{background:linear-gradient(135deg,var(--lavender),var(--sky));}
+    .rav3{background:linear-gradient(135deg,var(--mint),var(--sky));}
+    .rav4{background:linear-gradient(135deg,var(--peach),var(--rose));}
+    .rav5{background:linear-gradient(135deg,#c9b8f0,#f4a7b9);}
+    .rav6{background:linear-gradient(135deg,#a8d8f0,#aaecdc);}
+    .rav7{background:linear-gradient(135deg,#f9c784,#a070d0);}
+
+    .review-user-name { font-size:.92rem; font-weight:700; }
+    .review-user-meta { font-size:.75rem; color:var(--text-light); margin-top:.1rem; }
+    .review-user-badge {
+      display:inline-flex; align-items:center; gap:.25rem;
+      font-size:.68rem; font-weight:700; padding:.15rem .5rem; border-radius:50px;
+      background:linear-gradient(135deg,rgba(253,232,240,.8),rgba(232,234,255,.8));
+      border:1px solid var(--lavender); color:#a070d0; margin-top:.2rem;
+    }
+
+    .review-card-right { display:flex; flex-direction:column; align-items:flex-end; gap:.4rem; }
+    .star-display { color:var(--peach); font-size:.95rem; letter-spacing:1px; }
+    .review-date { font-size:.73rem; color:var(--text-light); }
+    .review-event-tag {
+      display:inline-flex; align-items:center; gap:.3rem;
+      font-size:.7rem; font-weight:700; padding:.2rem .6rem; border-radius:50px;
+      background:#ede8ff; color:#a070d0;
+    }
+
+    .review-text { font-size:.88rem; color:var(--text-mid); line-height:1.75; font-style:italic; }
+    .review-text strong { font-style:normal; color:var(--text-dark); }
+
+    /* Tamil text secondary line */
+    .review-text-ta {
+      font-size:.82rem; color:var(--text-light); line-height:1.75;
+      margin-top:.4rem; font-style:normal;
+      display: none;
+    }
+    body.lang-ta .review-text { display: none; }
+    body.lang-ta .review-text-ta { display: block; }
+
+    .review-images {
+      display:flex; gap:.6rem; margin-top:1rem; flex-wrap:wrap;
+    }
+    .review-img {
+      width:70px; height:70px; border-radius:10px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.6rem; border:1.5px solid var(--glass-border);
+      cursor:pointer; transition:transform .2s;
+    }
+    .review-img:hover { transform:scale(1.08); }
+
+    .review-card-bottom {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-top:1.2rem; padding-top:1rem;
+      border-top:1px solid rgba(200,180,220,.2);
+      flex-wrap:wrap; gap:.6rem;
+    }
+    .review-helpful {
+      display:flex; align-items:center; gap:.8rem;
+    }
+    .helpful-label { font-size:.75rem; color:var(--text-light); }
+    .helpful-btn {
+      display:inline-flex; align-items:center; gap:.3rem;
+      padding:.28rem .8rem; border-radius:50px;
+      border:1.5px solid var(--glass-border); background:var(--glass-bg);
+      font-size:.75rem; font-weight:600; color:var(--text-mid);
+      cursor:pointer; transition:all .2s;
+    }
+    .helpful-btn:hover, .helpful-btn.voted {
+      background:linear-gradient(135deg,#fde8f0,#e8eaff);
+      color:#a070d0; border-color:var(--lavender);
+    }
+    .review-reply-btn {
+      font-size:.75rem; font-weight:600; color:var(--text-light);
+      cursor:pointer; transition:color .2s; background:none; border:none; font-family:'DM Sans',sans-serif;
+    }
+    .review-reply-btn:hover { color:#a070d0; }
+
+    /* Organiser reply */
+    .organiser-reply {
+      margin-top:1rem;
+      background:linear-gradient(135deg,rgba(232,234,255,.5),rgba(224,247,244,.5));
+      border:1px solid var(--lavender); border-radius:12px;
+      padding:1rem; display:flex; gap:.8rem;
+    }
+    .or-icon {
+      width:32px; height:32px; border-radius:50%;
+      background:linear-gradient(135deg,#a070d0,#50b8d8);
+      display:flex; align-items:center; justify-content:center;
+      font-size:.7rem; font-weight:800; color:#fff; flex-shrink:0;
+    }
+    .or-label { font-size:.75rem; font-weight:700; color:#a070d0; margin-bottom:.3rem; }
+    .or-text { font-size:.82rem; color:var(--text-mid); line-height:1.65; }
+    .or-text-ta { font-size:.78rem; color:var(--text-mid); line-height:1.65; display:none; }
+    body.lang-ta .or-text { display:none; }
+    body.lang-ta .or-text-ta { display:block; }
+
+    /* ── WRITE REVIEW ── */
+    .write-review-card {
+      background:linear-gradient(135deg,rgba(253,232,240,.6),rgba(232,234,255,.6));
+      border:1.5px solid var(--lavender);
+      border-radius:var(--radius); padding:2rem;
+      box-shadow:var(--shadow);
+    }
+    .write-review-card .card-title { color:var(--text-dark); }
+
+    .event-select-row {
+      display:flex; align-items:center; gap:.8rem; margin-bottom:1.4rem; flex-wrap:wrap;
+    }
+    .event-select-row label { font-size:.83rem; font-weight:600; color:var(--text-mid); }
+    .event-select {
+      flex:1; min-width:180px; padding:.52rem 1rem; border-radius:50px;
+      border:1.5px solid var(--glass-border); background:var(--glass-bg);
+      font-family:'DM Sans',sans-serif; font-size:.85rem; color:var(--text-dark);
+      outline:none; backdrop-filter:blur(10px);
+    }
+
+    .star-picker { display:flex; gap:.4rem; margin-bottom:1.4rem; }
+    .star-pick {
+      font-size:1.8rem; cursor:pointer; color:rgba(200,180,220,.4);
+      transition:transform .15s, color .15s;
+    }
+    .star-pick.hovered, .star-pick.selected { color:var(--peach); transform:scale(1.2); }
+
+    .review-textarea {
+      width:100%; min-height:120px; padding:1rem;
+      border:1.5px solid var(--glass-border); border-radius:14px;
+      background:rgba(255,255,255,.6); backdrop-filter:blur(10px);
+      font-family:'DM Sans',sans-serif; font-size:.88rem; color:var(--text-dark);
+      resize:vertical; outline:none; transition:border-color .2s;
+      line-height:1.65;
+    }
+    .review-textarea:focus { border-color:var(--lavender); }
+    .review-textarea::placeholder { color:var(--text-light); }
+
+    .char-count { font-size:.72rem; color:var(--text-light); text-align:right; margin-top:.3rem; }
+
+    .tag-row { display:flex; gap:.5rem; flex-wrap:wrap; margin:1rem 0; }
+    .tag-chip {
+      padding:.28rem .75rem; border-radius:50px; font-size:.75rem; font-weight:600;
+      border:1.5px solid var(--glass-border); background:var(--glass-bg);
+      color:var(--text-mid); cursor:pointer; transition:all .2s;
+    }
+    .tag-chip.selected {
+      background:linear-gradient(135deg,#e07090,#a070d0); color:#fff; border-color:transparent;
+    }
+
+    .submit-row { display:flex; gap:.8rem; align-items:center; flex-wrap:wrap; margin-top:1.2rem; }
+    .submit-btn {
+      padding:.82rem 2rem; border:none; border-radius:50px;
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      color:#fff; font-family:'DM Sans',sans-serif;
+      font-size:.92rem; font-weight:700; cursor:pointer;
+      box-shadow:0 6px 28px rgba(160,80,180,.3);
+      transition:transform .2s, filter .2s;
+    }
+    .submit-btn:hover { transform:translateY(-2px); filter:brightness(1.07); }
+    .submit-note { font-size:.75rem; color:var(--text-light); }
+
+    /* SUCCESS TOAST */
+    .toast {
+      position:fixed; bottom:2rem; left:50%; transform:translateX(-50%) translateY(20px);
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      color:#fff; padding:.8rem 1.8rem; border-radius:50px;
+      font-size:.88rem; font-weight:600; z-index:999;
+      box-shadow:0 8px 30px rgba(160,80,180,.35);
+      opacity:0; transition:opacity .3s, transform .3s; pointer-events:none;
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+    /* ── RIGHT SIDEBAR ── */
+    .reviews-right { position:sticky; top:calc(var(--nav-h) + 1.5rem); display:flex; flex-direction:column; gap:1.5rem; }
+
+    /* Rating summary */
+    .rating-summary-card {
+      background:var(--glass-bg); backdrop-filter:blur(20px);
+      border:1.5px solid var(--glass-border);
+      border-radius:var(--radius); padding:2rem;
+      box-shadow:var(--shadow); text-align:center;
+    }
+    .big-score {
+      font-family:'Playfair Display',serif;
+      font-size:4rem; font-weight:900; line-height:1;
+      background:linear-gradient(135deg,#e07090,#a070d0);
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .big-stars { font-size:1.3rem; color:var(--peach); margin:.4rem 0; }
+    .total-reviews { font-size:.8rem; color:var(--text-light); margin-bottom:1.5rem; }
+
+    .rating-bars { display:flex; flex-direction:column; gap:.6rem; }
+    .rb-row { display:flex; align-items:center; gap:.6rem; }
+    .rb-label { font-size:.75rem; color:var(--text-mid); width:26px; text-align:right; }
+    .rb-track { flex:1; height:7px; background:rgba(200,180,220,.2); border-radius:6px; overflow:hidden; cursor:pointer; }
+    .rb-fill { height:100%; border-radius:6px; transition:width .6s ease; }
+    .rb5 { background:linear-gradient(90deg,var(--peach),var(--rose)); }
+    .rb4 { background:linear-gradient(90deg,var(--rose),var(--lavender)); }
+    .rb3 { background:linear-gradient(90deg,var(--lavender),var(--sky)); }
+    .rb2 { background:linear-gradient(90deg,var(--sky),var(--mint)); }
+    .rb1 { background:linear-gradient(90deg,var(--mint),var(--sky)); }
+    .rb-count { font-size:.73rem; color:var(--text-light); width:26px; }
+
+    /* category ratings */
+    .category-ratings { margin-top:1.5rem; display:flex; flex-direction:column; gap:.8rem; }
+    .cr-item { display:flex; align-items:center; justify-content:space-between; }
+    .cr-label { font-size:.8rem; color:var(--text-mid); }
+    .cr-stars { color:var(--peach); font-size:.8rem; }
+    .cr-score { font-size:.8rem; font-weight:700; color:var(--text-dark); }
+
+    /* Most helpful */
+    .helpful-card {
+      background:var(--glass-bg); backdrop-filter:blur(16px);
+      border:1.5px solid var(--glass-border);
+      border-radius:var(--radius); padding:1.5rem;
+      box-shadow:var(--shadow);
+    }
+    .helpful-review {
+      background:linear-gradient(135deg,rgba(253,232,240,.4),rgba(232,234,255,.4));
+      border:1px solid var(--glass-border); border-radius:14px;
+      padding:1rem; margin-top:1rem;
+    }
+    .helpful-review-user { display:flex; align-items:center; gap:.6rem; margin-bottom:.6rem; }
+    .helpful-av {
+      width:30px; height:30px; border-radius:50%;
+      background:linear-gradient(135deg,var(--lavender),var(--sky));
+      display:flex; align-items:center; justify-content:center;
+      font-size:.7rem; font-weight:700; color:#fff;
+    }
+    .helpful-av-name { font-size:.82rem; font-weight:700; }
+    .helpful-av-stars { color:var(--peach); font-size:.7rem; margin-left:auto; }
+    .helpful-av-text { font-size:.8rem; color:var(--text-mid); line-height:1.6; font-style:italic; }
+
+    /* event picker */
+    .event-filter-card {
+      background:var(--glass-bg); backdrop-filter:blur(16px);
+      border:1.5px solid var(--glass-border);
+      border-radius:var(--radius); padding:1.5rem;
+      box-shadow:var(--shadow);
+    }
+    .event-filter-card h4 { font-size:.9rem; font-weight:700; margin-bottom:1rem; }
+    .event-filter-list { display:flex; flex-direction:column; gap:.6rem; }
+    .ef-item {
+      display:flex; align-items:center; gap:.8rem;
+      padding:.65rem .9rem; border-radius:12px;
+      background:linear-gradient(135deg,rgba(253,232,240,.3),rgba(232,234,255,.3));
+      border:1px solid var(--glass-border); cursor:pointer;
+      transition:all .2s;
+    }
+    .ef-item:hover, .ef-item.active {
+      background:linear-gradient(135deg,rgba(253,232,240,.7),rgba(232,234,255,.7));
+      border-color:var(--lavender);
+    }
+    .ef-icon { font-size:1.1rem; }
+    .ef-name { font-size:.82rem; font-weight:600; flex:1; }
+    .ef-count { font-size:.72rem; color:var(--text-light); }
+
+    /* ── PAGINATION ── */
+    .pagination { display:flex; align-items:center; justify-content:center; gap:.5rem; margin-top:1rem; }
+    .pg-btn {
+      width:36px; height:36px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:.83rem; font-weight:600; cursor:pointer;
+      border:1.5px solid var(--glass-border); background:var(--glass-bg);
+      color:var(--text-mid); transition:all .2s;
+    }
+    .pg-btn.active { background:linear-gradient(135deg,#e07090,#a070d0); color:#fff; border-color:transparent; }
+    .pg-btn:hover:not(.active) { background:linear-gradient(135deg,#fde8f0,#e8eaff); color:var(--text-dark); }
+
+    /* ── FOOTER ── */
+    footer {
+      position:relative; z-index:1;
+      background:rgba(255,248,245,.72); backdrop-filter:blur(16px);
+      border-top:1px solid var(--glass-border);
+      padding:3rem 5% 1.5rem;
+      display:flex; flex-wrap:wrap; gap:2rem;
+      justify-content:space-between; align-items:flex-start;
+    }
+    .footer-brand p { font-size:.85rem; color:var(--text-light); margin-top:.5rem; max-width:220px; }
+    .footer-links h4 { font-size:.88rem; font-weight:700; margin-bottom:.8rem; }
+    .footer-links a  { display:block; font-size:.83rem; color:var(--text-mid); text-decoration:none; margin-bottom:.4rem; transition:color .2s; }
+    .footer-links a:hover { color:var(--text-dark); }
+    .footer-bottom {
+      width:100%; border-top:1px solid rgba(200,180,220,.25);
+      padding-top:1rem; margin-top:1rem;
+      display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.5rem;
+    }
+    .footer-bottom p { font-size:.78rem; color:var(--text-light); }
+
+    /* ── ANIMATIONS ── */
+    .reveal { opacity:0; transform:translateY(24px); transition:opacity .6s ease, transform .6s ease; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(20px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .reviews-page-layout { animation:fadeUp .6s ease both; }
+
+    /* Tamil/English lang switch for inline elements */
+    [data-en], [data-ta] { display: inline; }
+    body.lang-ta [data-en] { display: none; }
+    body:not(.lang-ta) [data-ta] { display: none; }
+    body.lang-ta [data-ta] { display: inline; }
+
+    @media(max-width:900px) {
+      .reviews-page-layout { grid-template-columns:1fr; }
+      .reviews-right { position:static; }
+    }
+    @media(max-width:600px) {
+      .event-select-row { flex-direction:column; align-items:flex-start; }
+      footer { flex-direction:column; }
+      .nav-links { display:none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast">✅ Review submitted successfully!</div>
+
+  <!-- NAV -->
+  <nav>
+    <a href="/home/" class="nav-logo">Eventra</a>
+    <ul class="nav-links">
+      <li><a href="/home/"><span data-en>Home</span><span data-ta>முகப்பு</span></a></li>
+      <li><a href="/events/"><span data-en>Events</span><span data-ta>நிகழ்வுகள்</span></a></li>
+      <li><a href="/add-event/"><span data-en>Add Event</span><span data-ta>நிகழ்வு சேர்</span></a></li>
+      <li><a href="/dashboard/"><span data-en>Dashboard</span><span data-ta>டாஷ்போர்டு</span></a></li>
+    </ul>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button class="lang-btn active" id="btnEn" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" id="btnTa" onclick="setLang('ta')">தமிழ்</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGE HEADER -->
+  <div class="page-header" style="position:relative;z-index:1;margin-top:1rem;">
+    <div class="page-header-left">
+      <div class="page-tag">
+        <span data-en>Community Feedback</span>
+        <span data-ta>சமூக கருத்துகள்</span>
+      </div>
+      <div class="page-title">
+        <span data-en>Reviews & Ratings</span>
+        <span data-ta>விமர்சனங்கள் &amp; மதிப்பீடுகள்</span>
+      </div>
+      <div class="page-subtitle">
+        <span data-en>Real experiences from real attendees across all Eventra events.</span>
+        <span data-ta>அனைத்து Eventra நிகழ்வுகளிலும் கலந்துகொண்ட உண்மையான அனுபவங்கள்.</span>
+      </div>
+    </div>
+    <div class="page-header-right">
+      <button class="btn btn-primary" onclick="document.getElementById('writeReview').scrollIntoView({behavior:'smooth'})">
+        ✍️ <span data-en>Write a Review</span><span data-ta>விமர்சனம் எழுது</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <div class="reviews-page-layout">
+
+    <!-- LEFT COLUMN -->
+    <div class="reviews-left">
+ 
+      <!-- FILTER BAR -->
+      <div class="glass-card reveal" style="padding:1.2rem 1.6rem;">
+        <div class="filter-bar">
+          <span class="filter-bar-label">
+            <span data-en>Filter:</span><span data-ta>வடிகட்டு:</span>
+          </span>
+          <div class="filter-chips">
+            <div class="chip active" onclick="setFilter(this,'all')">
+              <span data-en>All Reviews</span><span data-ta>அனைத்து விமர்சனங்கள்</span>
+            </div>
+            <div class="chip" onclick="setFilter(this,'5')">⭐ <span data-en>5 Stars</span><span data-ta>5 நட்சத்திரம்</span></div>
+            <div class="chip" onclick="setFilter(this,'4')">⭐ <span data-en>4 Stars</span><span data-ta>4 நட்சத்திரம்</span></div>
+            <div class="chip" onclick="setFilter(this,'3')">⭐ <span data-en>3 & Below</span><span data-ta>3 & கீழே</span></div>
+            <div class="chip" onclick="setFilter(this,'photos')">📷 <span data-en>With Photos</span><span data-ta>புகைப்படங்களுடன்</span></div>
+          </div>
+          <select class="sort-select" onchange="sortReviews(this.value)">
+            <option value="recent"><span data-en>Most Recent</span></option>
+            <option value="helpful">Most Helpful</option>
+            <option value="high">Highest Rated</option>
+            <option value="low">Lowest Rated</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- REVIEWS LIST -->
+      <div class="review-list" id="reviewList">
+
+        <!-- Review 1 -->
+        <div class="review-card reveal" data-stars="5">
+          <div class="review-card-top">
+            <div class="review-user">
+              <div class="review-av rav1">S</div>
+              <div>
+                <div class="review-user-name">Sneha Patel</div>
+                <div class="review-user-meta">
+                  <span data-en>Mumbai · 12 events attended</span>
+                  <span data-ta>மும்பை · 12 நிகழ்வுகளில் கலந்துகொண்டார்</span>
+                </div>
+                <div class="review-user-badge">
+                  ✅ <span data-en>Verified Attendee</span><span data-ta>சரிபார்க்கப்பட்ட கலந்தாளர்</span>
+                </div>
+              </div>
+            </div>
+            <div class="review-card-right">
+              <div class="star-display">★★★★★</div>
+              <div class="review-date">28 Aug 2025</div>
+              <div class="review-event-tag">🎨 UI/UX Masterclass</div>
+            </div>
+          </div>
+          <div class="review-text">
+            "Absolutely <strong>transformative experience.</strong> The Figma lab session alone was worth the ticket price — I've been designing for 2 years and I still picked up so many new techniques. The instructors were incredibly generous with their time during Q&A. I landed a design role within 3 weeks of attending!"
+          </div>
+          <div class="review-text-ta">
+            "மிகவும் <strong>மாற்றமளிக்கும் அனுபவம்.</strong> Figma லேப் அமர்வு மட்டுமே டிக்கெட் விலைக்கு மதிப்புடையது — நான் 2 ஆண்டுகளாக வடிவமைக்கிறேன், ஆனாலும் பல புதிய நுட்பங்களை கற்றுக்கொண்டேன். Q&A நேரத்தில் பயிற்றுவிப்பாளர்கள் மிகவும் உதவிகரமாக இருந்தனர். கலந்துகொண்ட 3 வாரங்களிலேயே வடிவமைப்பு வேலை கிடைத்தது!"
+          </div>
+          <div class="review-images">
+            <div class="review-img" style="background:linear-gradient(135deg,#fde8f0,#e8eaff);">📸</div>
+            <div class="review-img" style="background:linear-gradient(135deg,#e0f7f4,#e8eaff);">🖼</div>
+          </div>
+          <div class="organiser-reply">
+            <div class="or-icon">E</div>
+            <div>
+              <div class="or-label">
+                <span data-en>Organiser Reply · DesignCircle India</span>
+                <span data-ta>ஏற்பாட்டாளர் பதில் · DesignCircle India</span>
+              </div>
+              <div class="or-text">Thank you so much, Sneha! Hearing that you landed a role after the masterclass is the best feedback we could ask for. We can't wait to have you back for the next one! 🎉</div>
+              <div class="or-text-ta">மிக்க நன்றி, Sneha! மாஸ்டர்கிளாஸுக்கு பிறகு உங்களுக்கு வேலை கிடைத்தது என்று கேட்பது எங்களுக்கு மிகவும் மகிழ்ச்சியாக உள்ளது. அடுத்த நிகழ்வில் உங்களை மீண்டும் காண ஆவலாக இருக்கிறோம்! 🎉</div>
+            </div>
+          </div>
+          <div class="review-card-bottom">
+            <div class="review-helpful">
+              <span class="helpful-label"><span data-en>Helpful?</span><span data-ta>உதவியதா?</span></span>
+              <button class="helpful-btn" onclick="vote(this)">👍 <span data-en>Yes</span><span data-ta>ஆம்</span> <span class="vote-count">47</span></button>
+              <button class="helpful-btn" onclick="vote(this)">👎 <span data-en>No</span><span data-ta>இல்லை</span> <span class="vote-count">2</span></button>
+            </div>
+            <button class="review-reply-btn">💬 <span data-en>Reply</span><span data-ta>பதில்</span></button>
+          </div>
+        </div>
+
+        <!-- Review 2 -->
+        <div class="review-card reveal" data-stars="5">
+          <div class="review-card-top">
+            <div class="review-user">
+              <div class="review-av rav2">V</div>
+              <div>
+                <div class="review-user-name">Vikram Nair</div>
+                <div class="review-user-meta">
+                  <span data-en>Bangalore · 7 events attended</span>
+                  <span data-ta>பெங்களூரு · 7 நிகழ்வுகளில் கலந்துகொண்டார்</span>
+                </div>
+                <div class="review-user-badge">
+                  ✅ <span data-en>Verified Attendee</span><span data-ta>சரிபார்க்கப்பட்ட கலந்தாளர்</span>
+                </div>
+              </div>
+            </div>
+            <div class="review-card-right">
+              <div class="star-display">★★★★★</div>
+              <div class="review-date">24 Aug 2025</div>
+              <div class="review-event-tag">🎨 UI/UX Masterclass</div>
+            </div>
+          </div>
+          <div class="review-text">
+            "World-class speakers, <strong>hands-on learning</strong> and a beautiful venue. Eventra made everything seamless — from registration to the certificate. The live stream for remote attendees was a thoughtful touch. Already registered for the React Summit next month!"
+          </div>
+          <div class="review-text-ta">
+            "உலகத் தரமான பேச்சாளர்கள், <strong>நடைமுறை கற்றல்</strong> மற்றும் அழகான இடம். பதிவு முதல் சான்றிதழ் வரை Eventra அனைத்தையும் தடையின்றி செய்தது. தொலைதூர கலந்தாளர்களுக்கான நேரலை ஒளிபரப்பு மிகவும் சிந்தனைமிக்க தொடுகை. அடுத்த மாதம் React Summit க்கு ஏற்கனவே பதிவு செய்துவிட்டேன்!"
+          </div>
+          <div class="review-card-bottom">
+            <div class="review-helpful">
+              <span class="helpful-label"><span data-en>Helpful?</span><span data-ta>உதவியதா?</span></span>
+              <button class="helpful-btn" onclick="vote(this)">👍 <span data-en>Yes</span><span data-ta>ஆம்</span> <span class="vote-count">31</span></button>
+              <button class="helpful-btn" onclick="vote(this)">👎 <span data-en>No</span><span data-ta>இல்லை</span> <span class="vote-count">1</span></button>
+            </div>
+            <button class="review-reply-btn">💬 <span data-en>Reply</span><span data-ta>பதில்</span></button>
+          </div>
+        </div>
+
+        <!-- Review 3 -->
+        <div class="review-card reveal" data-stars="4">
+          <div class="review-card-top">
+            <div class="review-user">
+              <div class="review-av rav3">M</div>
+              <div>
+                <div class="review-user-name">Meera Iyer</div>
+                <div class="review-user-meta">
+                  <span data-en>Chennai · 5 events attended</span>
+                  <span data-ta>சென்னை · 5 நிகழ்வுகளில் கலந்துகொண்டார்</span>
+                </div>
+                <div class="review-user-badge">
+                  ✅ <span data-en>Verified Attendee</span><span data-ta>சரிபார்க்கப்பட்ட கலந்தாளர்</span>
+                </div>
+              </div>
+            </div>
+            <div class="review-card-right">
+              <div class="star-display">★★★★☆</div>
+              <div class="review-date">20 Aug 2025</div>
+              <div class="review-event-tag">🎨 UI/UX Masterclass</div>
+            </div>
+          </div>
+          <div class="review-text">
+            "Great content and amazing instructors. Would have loved a slightly <strong>longer session on design systems</strong>, but overall a fantastic day. The catered lunch was a lovely bonus. Would definitely recommend to anyone in the product design space."
+          </div>
+          <div class="review-text-ta">
+            "சிறந்த உள்ளடக்கம் மற்றும் அற்புதமான பயிற்றுவிப்பாளர்கள். <strong>டிசைன் சிஸ்டம்களில் கொஞ்சம் நீண்ட அமர்வு</strong> இருந்திருந்தால் நன்றாக இருந்திருக்கும், ஆனால் மொத்தத்தில் ஒரு அருமையான நாள். வழங்கப்பட்ட மதிய உணவு அழகான போனஸ். தயாரிப்பு வடிவமைப்பு துறையில் உள்ள யாருக்கும் நிச்சயமாக பரிந்துரைப்பேன்."
+          </div>
+          <div class="review-card-bottom">
+            <div class="review-helpful">
+              <span class="helpful-label"><span data-en>Helpful?</span><span data-ta>உதவியதா?</span></span>
+              <button class="helpful-btn" onclick="vote(this)">👍 <span data-en>Yes</span><span data-ta>ஆம்</span> <span class="vote-count">18</span></button>
+              <button class="helpful-btn" onclick="vote(this)">👎 <span data-en>No</span><span data-ta>இல்லை</span> <span class="vote-count">3</span></button>
+            </div>
+            <button class="review-reply-btn">💬 <span data-en>Reply</span><span data-ta>பதில்</span></button>
+          </div>
+        </div>
+
+        <!-- Review 4 -->
+        <div class="review-card reveal" data-stars="5">
+          <div class="review-card-top">
+            <div class="review-user">
+              <div class="review-av rav4">A</div>
+              <div>
+                <div class="review-user-name">Arjun Desai</div>
+                <div class="review-user-meta">
+                  <span data-en>Pune · 9 events attended</span>
+                  <span data-ta>புனே · 9 நிகழ்வுகளில் கலந்துகொண்டார்</span>
+                </div>
+                <div class="review-user-badge">
+                  ✅ <span data-en>Verified Attendee</span><span data-ta>சரிபார்க்கப்பட்ட கலந்தாளர்</span>
+                </div>
+              </div>
+            </div>
+            <div class="review-card-right">
+              <div class="star-display">★★★★★</div>
+              <div class="review-date">5 Oct 2025</div>
+              <div class="review-event-tag">⚛️ React Summit</div>
+            </div>
+          </div>
+          <div class="review-text">
+            "React Summit India was <strong>phenomenal</strong>. The speaker lineup was stacked and the networking sessions in between were genuinely valuable. Met my current co-founder here! The Eventra app made ticketing and check-in incredibly smooth."
+          </div>
+          <div class="review-text-ta">
+            "React Summit India <strong>அற்புதமாக</strong> இருந்தது. பேச்சாளர் பட்டியல் மிகவும் சக்திவாய்ந்ததாக இருந்தது மற்றும் இடையிலான நெட்வொர்க்கிங் அமர்வுகள் மிகவும் மதிப்புமிக்கதாக இருந்தன. இங்கே என் தற்போதைய இணை நிறுவனரை சந்தித்தேன்! Eventra ஆப் டிக்கெட்டிங் மற்றும் செக்-இன்னை மிகவும் சுலபமாக்கியது."
+          </div>
+          <div class="review-images">
+            <div class="review-img" style="background:linear-gradient(135deg,#e0f4ff,#c0e4f8);">🖥</div>
+            <div class="review-img" style="background:linear-gradient(135deg,#fde8f0,#e8eaff);">📸</div>
+            <div class="review-img" style="background:linear-gradient(135deg,#e8eaff,#e0f7f4);">🎉</div>
+          </div>
+          <div class="review-card-bottom">
+            <div class="review-helpful">
+              <span class="helpful-label"><span data-en>Helpful?</span><span data-ta>உதவியதா?</span></span>
+              <button class="helpful-btn" onclick="vote(this)">👍 <span data-en>Yes</span><span data-ta>ஆம்</span> <span class="vote-count">62</span></button>
+              <button class="helpful-btn" onclick="vote(this)">👎 <span data-en>No</span><span data-ta>இல்லை</span> <span class="vote-count">0</span></button>
+            </div>
+            <button class="review-reply-btn">💬 <span data-en>Reply</span><span data-ta>பதில்</span></button>
+          </div>
+        </div>
+
+        <!-- Review 5 -->
+        <div class="review-card reveal" data-stars="3">
+          <div class="review-card-top">
+            <div class="review-user">
+              <div class="review-av rav5">R</div>
+              <div>
+                <div class="review-user-name">Riya Sharma</div>
+                <div class="review-user-meta">
+                  <span data-en>Delhi · 3 events attended</span>
+                  <span data-ta>டெல்லி · 3 நிகழ்வுகளில் கலந்துகொண்டார்</span>
+                </div>
+              </div>
+            </div>
+            <div class="review-card-right">
+              <div class="star-display">★★★☆☆</div>
+              <div class="review-date">15 Sep 2025</div>
+              <div class="review-event-tag">📸 Photography Bootcamp</div>
+            </div>
+          </div>
+          <div class="review-text">
+            "Decent experience overall. The photography tips were practical and the instructor was knowledgeable. However, the <strong>venue was a bit cramped</strong> for 40 people and audio in the back rows was difficult to hear. Hoping the next edition addresses these logistical issues."
+          </div>
+          <div class="review-text-ta">
+            "மொத்தத்தில் நல்ல அனுபவம். புகைப்படக் குறிப்புகள் நடைமுறைசார்ந்தவை மற்றும் பயிற்றுவிப்பாளர் அறிவாளியாக இருந்தார். இருப்பினும், 40 பேருக்கு <strong>இடம் கொஞ்சம் சிறியதாக</strong> இருந்தது மற்றும் பின் வரிசைகளில் ஆடியோ கேட்பது கஷ்டமாக இருந்தது. அடுத்த பதிப்பு இந்த சிக்கல்களை தீர்க்கும் என்று நம்புகிறேன்."
+          </div>
+          <div class="organiser-reply">
+            <div class="or-icon">E</div>
+            <div>
+              <div class="or-label">
+                <span data-en>Organiser Reply · PhotoCircle Goa</span>
+                <span data-ta>ஏற்பாட்டாளர் பதில் · PhotoCircle Goa</span>
+              </div>
+              <div class="or-text">Hi Riya, thank you for your honest feedback! We've moved to a larger venue for the November edition and added a PA system. We'd love to have you back — we'll reach out with a discount code.</div>
+              <div class="or-text-ta">வணக்கம் Riya, உங்கள் நேர்மையான கருத்துக்கு நன்றி! நவம்பர் பதிப்பிற்கு பெரிய இடத்திற்கு மாறிவிட்டோம் மற்றும் PA சிஸ்டம் சேர்த்துள்ளோம். உங்களை மீண்டும் வரவேற்க விரும்புகிறோம் — தள்ளுபடி குறியீட்டுடன் தொடர்பு கொள்வோம்.</div>
+            </div>
+          </div>
+          <div class="review-card-bottom">
+            <div class="review-helpful">
+              <span class="helpful-label"><span data-en>Helpful?</span><span data-ta>உதவியதா?</span></span>
+              <button class="helpful-btn" onclick="vote(this)">👍 <span data-en>Yes</span><span data-ta>ஆம்</span> <span class="vote-count">9</span></button>
+              <button class="helpful-btn" onclick="vote(this)">👎 <span data-en>No</span><span data-ta>இல்லை</span> <span class="vote-count">1</span></button>
+            </div>
+            <button class="review-reply-btn">💬 <span data-en>Reply</span><span data-ta>பதில்</span></button>
+          </div>
+        </div>
+
+        <!-- Review 6 -->
+        <div class="review-card reveal" data-stars="5">
+          <div class="review-card-top">
+            <div class="review-user">
+              <div class="review-av rav6">N</div>
+              <div>
+                <div class="review-user-name">Nandini Krishnan</div>
+                <div class="review-user-meta">
+                  <span data-en>Hyderabad · 14 events attended</span>
+                  <span data-ta>ஹைதராபாத் · 14 நிகழ்வுகளில் கலந்துகொண்டார்</span>
+                </div>
+                <div class="review-user-badge">
+                  ⭐ <span data-en>Top Reviewer</span><span data-ta>சிறந்த மதிப்பாளர்</span>
+                </div>
+              </div>
+            </div>
+            <div class="review-card-right">
+              <div class="star-display">★★★★★</div>
+              <div class="review-date">11 Oct 2025</div>
+              <div class="review-event-tag">🖼 Canvas & Cocktails</div>
+            </div>
+          </div>
+          <div class="review-text">
+            "What a magical evening! Canvas & Cocktails was the perfect blend of <strong>creativity and socializing</strong>. Even as someone who's never painted before, I felt completely at ease. The instructor's energy was infectious and the cocktail menu was superb. My painting is proudly on my living room wall now!"
+          </div>
+          <div class="review-text-ta">
+            "என்ன மாயாஜால மாலை! Canvas & Cocktails <strong>படைப்பாற்றல் மற்றும் பழகுதலின்</strong> சரியான கலவையாக இருந்தது. வாழ்க்கையில் ஒருபோதும் வர்ணம் தீட்டாதவளாக இருந்தாலும், மிகவும் இயல்பாக உணர்ந்தேன். பயிற்றுவிப்பாளரின் ஆற்றல் தொற்றக்கூடியதாக இருந்தது மற்றும் காக்டெய்ல் மெனு சிறப்பாக இருந்தது. என் ஓவியம் இப்போது என் வாழ்க்கை அறை சுவரில் பெருமையுடன் தொங்குகிறது!"
+          </div>
+          <div class="review-images">
+            <div class="review-img" style="background:linear-gradient(135deg,#fce8ff,#e0c8f8);">🎨</div>
+          </div>
+          <div class="review-card-bottom">
+            <div class="review-helpful">
+              <span class="helpful-label"><span data-en>Helpful?</span><span data-ta>உதவியதா?</span></span>
+              <button class="helpful-btn" onclick="vote(this)">👍 <span data-en>Yes</span><span data-ta>ஆம்</span> <span class="vote-count">38</span></button>
+              <button class="helpful-btn" onclick="vote(this)">👎 <span data-en>No</span><span data-ta>இல்லை</span> <span class="vote-count">0</span></button>
+            </div>
+            <button class="review-reply-btn">💬 <span data-en>Reply</span><span data-ta>பதில்</span></button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- PAGINATION -->
+      <div class="pagination reveal">
+        <div class="pg-btn active">1</div>
+        <div class="pg-btn">2</div>
+        <div class="pg-btn">3</div>
+        <div class="pg-btn">…</div>
+        <div class="pg-btn">12</div>
+        <div class="pg-btn" style="width:auto;padding:0 1rem;">
+          <span data-en>Next →</span><span data-ta>அடுத்து →</span>
+        </div>
+      </div>
+
+      <!-- WRITE REVIEW -->
+      <div class="write-review-card reveal" id="writeReview">
+        <div class="card-title">
+          ✍️ <span data-en>Write a Review</span><span data-ta>விமர்சனம் எழுது</span>
+        </div>
+
+        <div class="event-select-row">
+          <label><span data-en>Select Event:</span><span data-ta>நிகழ்வை தேர்ந்தெடு:</span></label>
+          <select class="event-select">
+            <option>UI / UX Masterclass 2025</option>
+            <option>Canvas &amp; Cocktails Night</option>
+            <option>Photography Bootcamp</option>
+            <option>React Summit India</option>
+          </select>
+        </div>
+
+        <div style="font-size:.83rem;font-weight:600;color:var(--text-mid);margin-bottom:.6rem;">
+          <span data-en>Your Rating</span><span data-ta>உங்கள் மதிப்பீடு</span>
+        </div>
+        <div class="star-picker" id="starPicker">
+          <span class="star-pick" data-val="1" onmouseover="hoverStar(1)" onmouseout="unhoverStar()" onclick="selectStar(1)">★</span>
+          <span class="star-pick" data-val="2" onmouseover="hoverStar(2)" onmouseout="unhoverStar()" onclick="selectStar(2)">★</span>
+          <span class="star-pick" data-val="3" onmouseover="hoverStar(3)" onmouseout="unhoverStar()" onclick="selectStar(3)">★</span>
+          <span class="star-pick" data-val="4" onmouseover="hoverStar(4)" onmouseout="unhoverStar()" onclick="selectStar(4)">★</span>
+          <span class="star-pick" data-val="5" onmouseover="hoverStar(5)" onmouseout="unhoverStar()" onclick="selectStar(5)">★</span>
+        </div>
+        <div id="ratingLabel" style="font-size:.78rem;color:var(--text-light);margin-bottom:1rem;">
+          <span data-en>Click a star to rate</span><span data-ta>மதிப்பிட நட்சத்திரத்தை கிளிக் செய்யவும்</span>
+        </div>
+
+        <div style="font-size:.83rem;font-weight:600;color:var(--text-mid);margin-bottom:.5rem;">
+          <span data-en>Tag your experience</span><span data-ta>உங்கள் அனுபவத்தை குறிக்கவும்</span>
+        </div>
+        <div class="tag-row">
+          <div class="tag-chip" onclick="toggleTag(this)">👏 <span data-en>Great Content</span><span data-ta>சிறந்த உள்ளடக்கம்</span></div>
+          <div class="tag-chip" onclick="toggleTag(this)">🎤 <span data-en>Amazing Speaker</span><span data-ta>அற்புத பேச்சாளர்</span></div>
+          <div class="tag-chip" onclick="toggleTag(this)">📍 <span data-en>Great Venue</span><span data-ta>சிறந்த இடம்</span></div>
+          <div class="tag-chip" onclick="toggleTag(this)">🤝 <span data-en>Good Networking</span><span data-ta>நல்ல தொடர்பு</span></div>
+          <div class="tag-chip" onclick="toggleTag(this)">🍽 <span data-en>Loved the Food</span><span data-ta>உணவு அருமை</span></div>
+          <div class="tag-chip" onclick="toggleTag(this)">💡 <span data-en>Learnt a Lot</span><span data-ta>நிறைய கற்றேன்</span></div>
+          <div class="tag-chip" onclick="toggleTag(this)">⏱ <span data-en>Good Timing</span><span data-ta>நல்ல நேர மேலாண்மை</span></div>
+          <div class="tag-chip" onclick="toggleTag(this)">💰 <span data-en>Worth the Price</span><span data-ta>விலைக்கு மதிப்பானது</span></div>
+        </div>
+
+        <div style="margin-top:1.2rem;font-size:.83rem;font-weight:600;color:var(--text-mid);margin-bottom:.5rem;">
+          <span data-en>Your Review</span><span data-ta>உங்கள் விமர்சனம்</span>
+        </div>
+        <textarea class="review-textarea" id="reviewText"
+          placeholder="Share your experience — what did you love? What could be better? Your honest feedback helps fellow attendees!"
+          oninput="updateChar()"></textarea>
+        <div class="char-count"><span id="charCount">0</span> / 500 <span data-en>characters</span><span data-ta>எழுத்துகள்</span></div>
+
+        <div class="submit-row">
+          <button class="submit-btn" onclick="submitReview()">
+            🚀 <span data-en>Submit Review</span><span data-ta>விமர்சனம் சமர்ப்பி</span>
+          </button>
+          <span class="submit-note">
+            🔒 <span data-en>Your review will be visible after moderation.</span>
+            <span data-ta>உங்கள் விமர்சனம் மதிப்பாய்வுக்குப் பிறகு காட்டப்படும்.</span>
+          </span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="reviews-right">
+
+      <!-- Rating Summary -->
+      <div class="rating-summary-card reveal">
+        <div class="big-score">4.8</div>
+        <div class="big-stars">★★★★★</div>
+        <div class="total-reviews">
+          <span data-en>Based on 342 reviews across all events</span>
+          <span data-ta>அனைத்து நிகழ்வுகளிலும் 342 விமர்சனங்களின் அடிப்படையில்</span>
+        </div>
+
+        <div class="rating-bars">
+          <div class="rb-row">
+            <div class="rb-label">5★</div>
+            <div class="rb-track" onclick="setFilterByValue('5')"><div class="rb-fill rb5" style="width:78%"></div></div>
+            <div class="rb-count">267</div>
+          </div>
+          <div class="rb-row">
+            <div class="rb-label">4★</div>
+            <div class="rb-track" onclick="setFilterByValue('4')"><div class="rb-fill rb4" style="width:14%"></div></div>
+            <div class="rb-count">48</div>
+          </div>
+          <div class="rb-row">
+            <div class="rb-label">3★</div>
+            <div class="rb-track" onclick="setFilterByValue('3')"><div class="rb-fill rb3" style="width:5%"></div></div>
+            <div class="rb-count">17</div>
+          </div>
+          <div class="rb-row">
+            <div class="rb-label">2★</div>
+            <div class="rb-track"><div class="rb-fill rb2" style="width:2%"></div></div>
+            <div class="rb-count">7</div>
+          </div>
+          <div class="rb-row">
+            <div class="rb-label">1★</div>
+            <div class="rb-track"><div class="rb-fill rb1" style="width:1%"></div></div>
+            <div class="rb-count">3</div>
+          </div>
+        </div>
+
+        <div class="category-ratings">
+          <div style="font-size:.78rem;font-weight:700;color:var(--text-mid);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.05em;">
+            <span data-en>Category Breakdown</span><span data-ta>வகை விவரம்</span>
+          </div>
+          <div class="cr-item">
+            <span class="cr-label"><span data-en>Content Quality</span><span data-ta>உள்ளடக்க தரம்</span></span>
+            <span class="cr-stars">★★★★★</span>
+            <span class="cr-score">4.9</span>
+          </div>
+          <div class="cr-item">
+            <span class="cr-label"><span data-en>Speaker / Instructor</span><span data-ta>பேச்சாளர் / பயிற்றுவிப்பாளர்</span></span>
+            <span class="cr-stars">★★★★★</span>
+            <span class="cr-score">4.8</span>
+          </div>
+          <div class="cr-item">
+            <span class="cr-label"><span data-en>Venue & Logistics</span><span data-ta>இடம் &amp; ஏற்பாடுகள்</span></span>
+            <span class="cr-stars">★★★★☆</span>
+            <span class="cr-score">4.5</span>
+          </div>
+          <div class="cr-item">
+            <span class="cr-label"><span data-en>Value for Money</span><span data-ta>பணத்திற்கு மதிப்பு</span></span>
+            <span class="cr-stars">★★★★★</span>
+            <span class="cr-score">4.7</span>
+          </div>
+          <div class="cr-item">
+            <span class="cr-label"><span data-en>Overall Experience</span><span data-ta>மொத்த அனுபவம்</span></span>
+            <span class="cr-stars">★★★★★</span>
+            <span class="cr-score">4.8</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter by Event -->
+      <div class="event-filter-card reveal">
+        <h4>📅 <span data-en>Filter by Event</span><span data-ta>நிகழ்வால் வடிகட்டு</span></h4>
+        <div class="event-filter-list">
+          <div class="ef-item active" onclick="filterByEvent(this)">
+            <div class="ef-icon">🌐</div>
+            <div class="ef-name"><span data-en>All Events</span><span data-ta>அனைத்து நிகழ்வுகள்</span></div>
+            <div class="ef-count">342</div>
+          </div>
+          <div class="ef-item" onclick="filterByEvent(this)">
+            <div class="ef-icon">🎨</div>
+            <div class="ef-name">UI/UX Masterclass</div>
+            <div class="ef-count">128</div>
+          </div>
+          <div class="ef-item" onclick="filterByEvent(this)">
+            <div class="ef-icon">⚛️</div>
+            <div class="ef-name">React Summit India</div>
+            <div class="ef-count">94</div>
+          </div>
+          <div class="ef-item" onclick="filterByEvent(this)">
+            <div class="ef-icon">🖼</div>
+            <div class="ef-name">Canvas &amp; Cocktails</div>
+            <div class="ef-count">67</div>
+          </div>
+          <div class="ef-item" onclick="filterByEvent(this)">
+            <div class="ef-icon">📸</div>
+            <div class="ef-name">Photography Bootcamp</div>
+            <div class="ef-count">53</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Most Helpful -->
+      <div class="helpful-card reveal">
+        <div class="card-title" style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:800;color:var(--text-dark);display:flex;align-items:center;gap:.5rem;margin-bottom:0;">
+          👑 <span data-en>Most Helpful Review</span><span data-ta>மிகவும் உதவிகரமான விமர்சனம்</span>
+        </div>
+        <div class="helpful-review">
+          <div class="helpful-review-user">
+            <div class="helpful-av">A</div>
+            <div class="helpful-av-name">Arjun Desai</div>
+            <div class="helpful-av-stars">★★★★★</div>
+          </div>
+          <div class="helpful-av-text">
+            <span data-en>"Met my current co-founder here! The Eventra app made ticketing and check-in incredibly smooth."</span>
+            <span data-ta>"இங்கே என் தற்போதைய இணை நிறுவனரை சந்தித்தேன்! Eventra ஆப் டிக்கெட்டிங் மற்றும் செக்-இன்னை மிகவும் சுலபமாக்கியது."</span>
+          </div>
+          <div style="font-size:.72rem;color:var(--text-light);margin-top:.6rem;">
+            <span data-en>62 people found this helpful</span>
+            <span data-ta>62 பேர் இதை உதவிகரமாக கண்டனர்</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-brand">
+      <a href="/home/" class="nav-logo" style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;background:linear-gradient(135deg,#e07090,#a070d0,#50b8d8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none;">Eventra</a>
+      <p>
+        <span data-en>Smart event management designed for the modern creator.</span>
+        <span data-ta>நவீன படைப்பாளிகளுக்காக வடிவமைக்கப்பட்ட திறமையான நிகழ்வு மேலாண்மை.</span>
+      </p>
+    </div>
+    <div class="footer-links">
+      <h4><span data-en>Product</span><span data-ta>தயாரிப்பு</span></h4>
+      <a href="/events/"><span data-en>Browse Events</span><span data-ta>நிகழ்வுகளை உலாவு</span></a>
+      <a href="/add-event/"><span data-en>Create Event</span><span data-ta>நிகழ்வை உருவாக்கு</span></a>
+      <a href="/dashboard/"><span data-en>Dashboard</span><span data-ta>டாஷ்போர்டு</span></a>
+    </div>
+    <div class="footer-links">
+      <h4><span data-en>Company</span><span data-ta>நிறுவனம்</span></h4>
+      <a href="#"><span data-en>About Us</span><span data-ta>எங்களைப் பற்றி</span></a>
+      <a href="#"><span data-en>Blog</span><span data-ta>வலைப்பதிவு</span></a>
+      <a href="#"><span data-en>Careers</span><span data-ta>வேலைவாய்ப்பு</span></a>
+    </div>
+    <div class="footer-links">
+      <h4><span data-en>Support</span><span data-ta>ஆதரவு</span></h4>
+      <a href="#"><span data-en>Help Centre</span><span data-ta>உதவி மையம்</span></a>
+      <a href="#"><span data-en>Privacy Policy</span><span data-ta>தனியுரிமைக் கொள்கை</span></a>
+      <a href="#"><span data-en>Terms of Service</span><span data-ta>சேவை விதிமுறைகள்</span></a>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 Eventra. <span data-en>Crafted with ♥ for event creators everywhere.</span><span data-ta>எங்கும் உள்ள நிகழ்வு படைப்பாளிகளுக்காக ♥ உடன் உருவாக்கப்பட்டது.</span></p>
+      <p>🌍 <span data-en>All rights reserved.</span><span data-ta>அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.</span></p>
+    </div>
+  </footer>
+
+  <script>
+    // ── Language Toggle ──
+    let currentLang = 'en';
+    const USER_REVIEWS_KEY = 'eventra_user_reviews';
+
+    function getUserReviews() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(USER_REVIEWS_KEY));
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveUserReviews(list) {
+      localStorage.setItem(USER_REVIEWS_KEY, JSON.stringify(list));
+    }
+
+    function escHtml(val) {
+      return String(val || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getReviewerName() {
+      const email = (localStorage.getItem('email') || '').trim();
+      if (email && email.includes('@')) return email.split('@')[0];
+      return (localStorage.getItem('name') || 'Guest User').trim();
+    }
+
+    function getReviewerEmail() {
+      return (localStorage.getItem('email') || '').trim().toLowerCase();
+    }
+
+    function getCurrentEventTitle() {
+      try {
+        const selected = JSON.parse(localStorage.getItem('eventra_selected_event') || 'null');
+        if (selected && selected.title) return String(selected.title);
+      } catch (e) {}
+      return currentLang === 'ta' ? 'பொது நிகழ்வு கருத்து' : 'General Event Feedback';
+    }
+
+    function formatReviewDate(dateStr) {
+      const dt = new Date(dateStr || '');
+      if (Number.isNaN(dt.getTime())) return '-';
+      return dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function buildUserReviewCard(review) {
+      const stars = Math.min(5, Math.max(1, Number(review.stars || 5)));
+      const starIcons = '★'.repeat(stars) + '☆'.repeat(5 - stars);
+      const reviewerName = escHtml(review.reviewerName || 'User');
+      const eventTitle = escHtml(review.eventTitle || 'General Event Feedback');
+      const reviewText = escHtml(review.text || '');
+      const dateText = escHtml(formatReviewDate(review.createdAt));
+      const helpful = Number(review.helpful || 0);
+      const initial = escHtml(reviewerName.charAt(0).toUpperCase() || 'U');
+
+      return `
+        <div class="review-card reveal visible user-review-card" data-stars="${stars}">
+          <div class="review-card-top">
+            <div class="review-user">
+              <div class="review-av" style="background:linear-gradient(135deg,#a070d0,#50b8d8);color:#fff;">${initial}</div>
+              <div>
+                <div class="review-user-name">${reviewerName}</div>
+                <div class="review-user-meta">Community member</div>
+                <div class="review-user-badge">🆕 <span data-en>New Review</span><span data-ta>புதிய விமர்சனம்</span></div>
+              </div>
+            </div>
+            <div class="review-card-right">
+              <div class="stars">${starIcons}</div>
+              <div class="review-date">${dateText}</div>
+              <div class="review-event-tag">🗂 ${eventTitle}</div>
+            </div>
+          </div>
+          <div class="review-text">"${reviewText}"</div>
+          <div class="review-text-ta">"${reviewText}"</div>
+          <div class="review-card-bottom">
+            <div class="review-helpful">
+              <button onclick="vote(this)">👍 <span data-en>Helpful</span><span data-ta>உதவிகரம்</span> (<span class="vote-count">${helpful}</span>)</button>
+            </div>
+            <button class="review-reply-btn">💬 <span data-en>Reply</span><span data-ta>பதில்</span></button>
+          </div>
+        </div>`;
+    }
+
+    function renderUserReviews() {
+      const list = document.getElementById('reviewList');
+      if (!list) return;
+
+      list.querySelectorAll('.user-review-card').forEach(el => el.remove());
+
+      const userReviews = getUserReviews()
+        .slice()
+        .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+
+      userReviews.forEach(review => {
+        list.insertAdjacentHTML('afterbegin', buildUserReviewCard(review));
+      });
+    }
+
+    function setLang(lang) {
+      currentLang = lang;
+      document.body.classList.toggle('lang-ta', lang === 'ta');
+      document.getElementById('btnEn').classList.toggle('active', lang === 'en');
+      document.getElementById('btnTa').classList.toggle('active', lang === 'ta');
+
+      // Update textarea placeholder
+      const ta = document.getElementById('reviewText');
+      if (lang === 'ta') {
+        ta.placeholder = 'உங்கள் அனுபவத்தை பகிரவும் — என்ன பிடித்தது? என்ன சிறப்பாக இருக்கலாம்? உங்கள் நேர்மையான கருத்து மற்ற கலந்தாளர்களுக்கு உதவும்!';
+      } else {
+        ta.placeholder = 'Share your experience — what did you love? What could be better? Your honest feedback helps fellow attendees!';
+      }
+
+      // Update sort select options
+      const sort = document.querySelector('.sort-select');
+      if (lang === 'ta') {
+        sort.options[0].text = 'மிக சமீபத்தியது';
+        sort.options[1].text = 'மிகவும் உதவிகரமானது';
+        sort.options[2].text = 'அதிக மதிப்பீடு';
+        sort.options[3].text = 'குறைந்த மதிப்பீடு';
+      } else {
+        sort.options[0].text = 'Most Recent';
+        sort.options[1].text = 'Most Helpful';
+        sort.options[2].text = 'Highest Rated';
+        sort.options[3].text = 'Lowest Rated';
+      }
+    }
+
+    // ── Reveal on scroll ──
+    const reveals = document.querySelectorAll('.reveal');
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.08 });
+    reveals.forEach(el => io.observe(el));
+
+    // ── Star picker ──
+    let selectedStars = 0;
+    const labelsEn = ['','Terrible 😞','Poor 😕','Okay 😐','Good 😊','Excellent 🤩'];
+    const labelsTa = ['','மிகவும் மோசம் 😞','மோசம் 😕','சரியானது 😐','நல்லது 😊','மிகவும் நல்லது 🤩'];
+    function hoverStar(n) {
+      document.querySelectorAll('.star-pick').forEach((s,i) => {
+        s.classList.toggle('hovered', i < n);
+      });
+    }
+    function unhoverStar() {
+      document.querySelectorAll('.star-pick').forEach((s,i) => {
+        s.classList.toggle('hovered', i < selectedStars);
+      });
+    }
+    function selectStar(n) {
+      selectedStars = n;
+      document.querySelectorAll('.star-pick').forEach((s,i) => {
+        s.classList.toggle('selected', i < n);
+        s.classList.remove('hovered');
+      });
+      const label = currentLang === 'ta' ? labelsTa[n] : labelsEn[n];
+      document.getElementById('ratingLabel').innerHTML = label;
+      document.getElementById('ratingLabel').style.color = '#a070d0';
+    }
+
+    // ── Tag chips ──
+    function toggleTag(el) { el.classList.toggle('selected'); }
+
+    // ── Char count ──
+    function updateChar() {
+      const val = document.getElementById('reviewText').value.length;
+      document.getElementById('charCount').textContent = Math.min(val,500);
+    }
+
+    // ── Submit review ──
+    function submitReview() {
+      if (!selectedStars) {
+        alert(currentLang === 'ta' ? 'முதலில் நட்சத்திர மதிப்பீட்டை தேர்ந்தெடுக்கவும்!' : 'Please select a star rating first!');
+        return;
+      }
+      const text = document.getElementById('reviewText').value.trim();
+      if (text.length < 20) {
+        alert(currentLang === 'ta' ? 'குறைந்தது 20 எழுத்துகள் எழுதவும்.' : 'Please write at least 20 characters.');
+        return;
+      }
+
+      const review = {
+        id: 'rev-' + Date.now(),
+        reviewerName: getReviewerName(),
+        reviewerEmail: getReviewerEmail(),
+        stars: selectedStars,
+        text,
+        eventTitle: getCurrentEventTitle(),
+        createdAt: new Date().toISOString(),
+        helpful: 0
+      };
+
+      const reviews = getUserReviews();
+      reviews.push(review);
+      saveUserReviews(reviews);
+      renderUserReviews();
+
+      const msg = currentLang === 'ta'
+        ? '✅ விமர்சனம் சமர்ப்பிக்கப்பட்டது! இது இப்போது பயனர் மற்றும் நிர்வாகப் பக்கங்களில் தெரியும்.'
+        : '✅ Review submitted! It is now visible on both user and admin pages.';
+      showToast(msg);
+      selectedStars = 0;
+      document.querySelectorAll('.star-pick').forEach(s => s.classList.remove('selected','hovered'));
+      document.getElementById('ratingLabel').innerHTML = currentLang === 'ta'
+        ? '<span data-ta>மதிப்பிட நட்சத்திரத்தை கிளிக் செய்யவும்</span>'
+        : '<span data-en>Click a star to rate</span>';
+      document.getElementById('ratingLabel').style.color = '';
+      document.getElementById('reviewText').value = '';
+      document.getElementById('charCount').textContent = '0';
+      document.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('selected'));
+    }
+
+    // ── Toast ──
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // ── Filter chips ──
+    function setFilter(el, val) {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      if (el) el.classList.add('active');
+      applyFilter(val);
+    }
+
+    function setFilterByValue(val) {
+      const chips = document.querySelectorAll('.chip');
+      chips.forEach(c => c.classList.remove('active'));
+      chips.forEach(c => {
+        const txt = c.textContent.trim();
+        if (txt.includes(val + ' ') || txt.includes(val + '\n')) c.classList.add('active');
+      });
+      applyFilter(val);
+    }
+
+    function applyFilter(val) {
+      const cards = document.querySelectorAll('.review-card');
+      cards.forEach(card => {
+        const stars = parseInt(card.dataset.stars);
+        const hasPhotos = card.querySelector('.review-images');
+        if (val === 'all') { card.style.display = ''; }
+        else if (val === '5') { card.style.display = stars === 5 ? '' : 'none'; }
+        else if (val === '4') { card.style.display = stars === 4 ? '' : 'none'; }
+        else if (val === '3') { card.style.display = stars <= 3 ? '' : 'none'; }
+        else if (val === 'photos') { card.style.display = hasPhotos ? '' : 'none'; }
+      });
+    }
+
+    // ── Sort ──
+    function sortReviews(val) {
+      const msg = currentLang === 'ta' ? `✨ வரிசைப்படுத்தப்பட்டது: ${val}` : `✨ Sorted by: ${val}`;
+      showToast(msg);
+    }
+
+    // ── Helpful vote ──
+    function vote(btn) {
+      if (btn.classList.contains('voted')) return;
+      btn.classList.add('voted');
+      const span = btn.querySelector('.vote-count');
+      span.textContent = parseInt(span.textContent) + 1;
+    }
+
+    // ── Event filter ──
+    function filterByEvent(el) {
+      document.querySelectorAll('.ef-item').forEach(i => i.classList.remove('active'));
+      el.classList.add('active');
+      const msg = currentLang === 'ta' ? '🔍 விமர்சனங்களை வடிகட்டுகிறது...' : '🔍 Filtering reviews...';
+      showToast(msg);
+    }
+
+    renderUserReviews();
+  </script>
+</body>
+</html>

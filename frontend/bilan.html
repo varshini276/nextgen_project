@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Eventra – Smart Event Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --rose:      #f4a7b9;
+      --peach:     #f9c784;
+      --lavender:  #c9b8f0;
+      --sky:       #a8d8f0;
+      --mint:      #aaecdc;
+      --cream:     #fff8f0;
+      --glass-bg:  rgba(255,255,255,0.55);
+      --glass-border: rgba(255,255,255,0.75);
+      --shadow:    0 8px 40px rgba(180,120,140,0.18);
+      --text-dark: #3a2a3e;
+      --text-mid:  #7a6080;
+      --text-light:#b8a8c0;
+      --radius:    20px;
+      --nav-h:     70px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: linear-gradient(135deg, #fde8f0 0%, #fef3e2 30%, #e8eaff 65%, #e0f7f4 100%);
+      min-height: 100vh;
+      color: var(--text-dark);
+      overflow-x: hidden;
+    }
+
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: .45;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .blob-1 { width:480px; height:480px; background: var(--rose);    top:-120px; left:-120px; }
+    .blob-2 { width:380px; height:380px; background: var(--lavender); top:40%;   right:-100px; }
+    .blob-3 { width:300px; height:300px; background: var(--mint);     bottom:-80px; left:30%; }
+
+    nav {
+      position: fixed; top:0; left:0; right:0; z-index: 100;
+      height: var(--nav-h);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 5%;
+      background: rgba(255,248,245,0.72);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--glass-border);
+      box-shadow: 0 2px 24px rgba(200,140,160,0.10);
+    }
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem; font-weight: 900;
+      background: linear-gradient(135deg, #e07090, #a070d0, #50b8d8);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .nav-links {
+      display: flex; gap: 2rem; list-style: none;
+    }
+    .nav-links a {
+      text-decoration: none; font-size: .95rem; font-weight: 500;
+      color: var(--text-mid);
+      transition: color .25s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content:''; position:absolute; bottom:-3px; left:0; right:0;
+      height:2px; border-radius:2px;
+      background: linear-gradient(90deg,var(--rose),var(--lavender));
+      transform: scaleX(0); transition: transform .25s;
+    }
+    .nav-links a:hover { color: var(--text-dark); }
+    .nav-links a:hover::after { transform: scaleX(1); }
+
+    .btn {
+      display: inline-flex; align-items: center; gap:.5rem;
+      padding: .72rem 1.6rem; border: none; cursor: pointer;
+      border-radius: 50px; font-family: 'DM Sans', sans-serif;
+      font-size: .93rem; font-weight: 600;
+      transition: transform .2s, box-shadow .2s, filter .2s;
+    }
+    .btn:hover { transform: translateY(-2px); filter: brightness(1.06); }
+    .btn-primary {
+      background: linear-gradient(135deg, #e07090, #a070d0);
+      color: #fff;
+      box-shadow: 0 6px 28px rgba(160,80,180,.35);
+    }
+    .btn-ghost {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1.5px solid var(--glass-border);
+      color: var(--text-dark);
+    }
+
+.hero {
+  position: relative;
+  z-index: 1;
+  overflow: hidden; /* 🔥 IMPORTANT for slide animation */
+
+  /* margin-top: var(--nav-h); */
+  /* min-height: calc(100vh - var(--nav-h)); */
+
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+}
+  .hero-copy {
+  display: flex;
+  flex-direction: column;   /* 🔥 makes vertical layout */
+  gap: 15px;               /* spacing between items */
+  max-width: 450px;
+}
+    .hero-badge {
+      display: inline-flex; align-items: center; gap:.5rem;
+      background: var(--glass-bg); backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: 50px; padding: .4rem 1rem;
+      font-size: .82rem; font-weight: 600; color: var(--text-mid);
+      margin-bottom: 1.4rem;
+      animation: fadeUp .7s ease both;
+    }
+    .hero-badge span { width:8px; height:8px; border-radius:50%; background:var(--rose); display:block; }
+    .hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 4vw, 3rem); /* ✅ keep this */
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--text-dark);
+  animation: fadeUp .7s .1s ease both;
+}
+ .hero h1 .accent {
+  background: linear-gradient(135deg, #5a4619, #5d489c, #812261);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+   .hero-sub {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 1rem 0 1.5rem;
+}
+    .hero-actions {
+      display: flex; gap: 1rem; flex-wrap: wrap;
+      animation: fadeUp .7s .3s ease both;
+    }
+    .hero-visual {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      animation: fadeUp .9s .2s ease both;
+    }
+    .event-card-mock {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1.5px solid var(--glass-border);
+      border-radius: 28px;
+      padding: 2rem;
+      width: 320px;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+    .mock-img {
+      width: 100%; height: 170px; border-radius: 16px;
+      background: linear-gradient(135deg, var(--rose), var(--lavender));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3rem; margin-bottom: 1.2rem;
+    }
+    .mock-tag {
+      display: inline-block; padding: .3rem .8rem; border-radius: 50px;
+      background: linear-gradient(135deg,#fde8f0,#e8eaff);
+      font-size: .78rem; font-weight: 600; color: #a070d0;
+      margin-bottom: .7rem;
+    }
+    .mock-title { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; margin-bottom:.5rem; }
+    .mock-meta { font-size:.82rem; color:var(--text-light); display:flex; gap:1rem; }
+    .mock-avatars { display:flex; margin-top:1rem; }
+    .mock-avatars .av {
+      width:32px; height:32px; border-radius:50%; border:2.5px solid #fff;
+      margin-left:-8px; display:flex; align-items:center; justify-content:center;
+      font-size:.7rem; font-weight:700;
+    }
+    .av1{background:linear-gradient(135deg,var(--rose),var(--peach)); color:#fff;}
+    .av2{background:linear-gradient(135deg,var(--lavender),var(--sky)); color:#fff;}
+    .av3{background:linear-gradient(135deg,var(--mint),var(--sky)); color:#fff;}
+    .av-more{background:#f0eaf8; color:var(--text-mid);}
+    .floating-pill {
+      position: absolute;
+      background: var(--glass-bg); backdrop-filter:blur(12px);
+      border:1.5px solid var(--glass-border);
+      border-radius:50px; padding:.5rem 1rem;
+      font-size:.78rem; font-weight:600;
+      box-shadow: 0 4px 16px rgba(160,100,180,.15);
+      white-space: nowrap;
+    }
+    .pill-1 { top:-18px; right:-24px; color:#e07090; }
+    .pill-2 { bottom:10px; left:-32px; color:#50b8d8; }
+
+    .stats {
+      position: relative; z-index:1;
+      display: flex; gap: 1.5rem; flex-wrap: wrap;
+      padding: 0 5% 5rem;
+      justify-content: center;
+    }
+    .stat-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      border: 1.5px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 1.6rem 2.2rem;
+      text-align: center;
+      box-shadow: var(--shadow);
+      min-width: 160px;
+      transition: transform .3s;
+    }
+    .stat-card:hover { transform: translateY(-4px); }
+    .stat-num {
+      font-family:'Playfair Display',serif;
+      font-size:2.2rem; font-weight:900;
+      background: linear-gradient(135deg, #e07090, #a070d0);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .stat-label { font-size:.83rem; color:var(--text-light); margin-top:.3rem; }
+
+    section { position: relative; z-index:1; padding: 5rem 5%; }
+    .section-tag {
+      display: inline-flex; align-items:center; gap:.4rem;
+      font-size:.82rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+      color: var(--text-mid); margin-bottom:.8rem;
+    }
+    .section-tag::before {
+      content:''; display:block; width:20px; height:2px; border-radius:2px;
+      background:linear-gradient(90deg,var(--rose),var(--lavender));
+    }
+    .section-title {
+      font-family:'Playfair Display',serif;
+      font-size: clamp(1.8rem,3.5vw,2.8rem);
+      font-weight:900; line-height:1.2; color:var(--text-dark);
+      max-width:560px;
+    }
+    .section-sub {
+      font-size:1rem; color:var(--text-mid); line-height:1.7;
+      max-width:520px; margin-top:.9rem;
+    }
+
+    .features-header { margin-bottom: 3.5rem; }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+    .feature-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      border: 1.5px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      transition: transform .3s, box-shadow .3s;
+      cursor: default;
+    }
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 48px rgba(160,100,180,.22);
+    }
+    .feature-icon {
+      width:52px; height:52px; border-radius:14px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.5rem; margin-bottom:1.2rem;
+    }
+    .fi-rose    { background:linear-gradient(135deg,#fde8f0,#f9c8d8); }
+    .fi-lavender{ background:linear-gradient(135deg,#ede8ff,#d8c8f8); }
+    .fi-sky     { background:linear-gradient(135deg,#e0f4ff,#c0e4f8); }
+    .fi-mint    { background:linear-gradient(135deg,#e0fff8,#c0ece0); }
+    .feature-card h3 {
+      font-size:1.05rem; font-weight:700; margin-bottom:.5rem; color:var(--text-dark);
+    }
+    .feature-card p { font-size:.9rem; color:var(--text-mid); line-height:1.65; }
+
+    .events-preview-header {
+      display:flex; align-items:flex-end; justify-content:space-between;
+      margin-bottom:2.5rem; flex-wrap:wrap; gap:1rem;
+    }
+    .events-row {
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap:1.5rem;
+    }
+    .event-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      border: 1.5px solid var(--glass-border);
+      border-radius: var(--radius);
+      overflow:hidden;
+      box-shadow: var(--shadow);
+      transition: transform .3s, box-shadow .3s;
+      cursor:pointer;
+    }
+    .event-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 48px rgba(160,100,180,.22);
+    }
+    .ec-img {
+      height:150px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:2.8rem;
+    }
+    .ec-img-1{background:linear-gradient(135deg,#fde8f0,#f9c8e8);}
+    .ec-img-2{background:linear-gradient(135deg,#ede8ff,#c8d8f8);}
+    .ec-img-3{background:linear-gradient(135deg,#e0fff8,#c0ecf0);}
+    .ec-body { padding:1.4rem; }
+    .ec-tag {
+      display:inline-block; padding:.25rem .7rem; border-radius:50px;
+      font-size:.75rem; font-weight:600;
+      background:linear-gradient(135deg,#fde8f0,#e8eaff);
+      color:#a070d0; margin-bottom:.6rem;
+    }
+    .ec-title {
+      font-family:'Playfair Display',serif;
+      font-size:1rem; font-weight:700; margin-bottom:.5rem;
+    }
+    .ec-meta { font-size:.8rem; color:var(--text-light); display:flex; gap:.8rem; }
+    .ec-footer {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-top:1rem; padding-top:.9rem;
+      border-top:1px solid rgba(200,180,220,.25);
+    }
+    .ec-spots { font-size:.8rem; color:var(--text-mid); font-weight:500; }
+    .ec-btn {
+      font-size:.8rem; font-weight:600; color:#e07090;
+      background:none; border:none; cursor:pointer;
+      transition:color .2s;
+    }
+    .ec-btn:hover { color:#a070d0; }
+
+    .how-steps {
+      display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap:1.5rem; margin-top:3rem; position:relative;
+    }
+    .how-steps::before {
+      content:'';
+      position:absolute; top:36px; left:10%; right:10%; height:2px;
+      background:linear-gradient(90deg,var(--rose),var(--lavender),var(--sky));
+      border-radius:2px;
+      opacity:.4;
+    }
+    .step-card {
+      background:var(--glass-bg); backdrop-filter:blur(16px);
+      border:1.5px solid var(--glass-border);
+      border-radius:var(--radius); padding:2rem 1.5rem;
+      text-align:center; box-shadow:var(--shadow);
+      transition:transform .3s;
+    }
+    .step-card:hover { transform:translateY(-5px); }
+    .step-num {
+      width:50px; height:50px; border-radius:50%;
+      background:linear-gradient(135deg,var(--rose),var(--lavender));
+      color:#fff; font-weight:800; font-size:1.1rem;
+      display:flex; align-items:center; justify-content:center;
+      margin:0 auto 1.1rem;
+    }
+    .step-card h3 { font-size:.98rem; font-weight:700; margin-bottom:.5rem; }
+    .step-card p  { font-size:.86rem; color:var(--text-mid); line-height:1.6; }
+
+    .testi-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr));
+      gap:1.5rem; margin-top:3rem;
+    }
+    .testi-card {
+      background:var(--glass-bg); backdrop-filter:blur(16px);
+      border:1.5px solid var(--glass-border);
+      border-radius:var(--radius); padding:2rem;
+      box-shadow:var(--shadow);
+    }
+    .testi-stars { color:var(--peach); font-size:1rem; margin-bottom:.9rem; }
+    .testi-text { font-size:.92rem; color:var(--text-mid); line-height:1.7; font-style:italic; }
+    .testi-author { display:flex; align-items:center; gap:.8rem; margin-top:1.2rem; }
+    .testi-av {
+      width:40px; height:40px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:.85rem; font-weight:700;
+    }
+    .tav1{background:linear-gradient(135deg,var(--rose),var(--peach)); color:#fff;}
+    .tav2{background:linear-gradient(135deg,var(--lavender),var(--sky)); color:#fff;}
+    .tav3{background:linear-gradient(135deg,var(--mint),var(--sky)); color:#fff;}
+    .testi-name { font-weight:600; font-size:.88rem; }
+    .testi-role { font-size:.78rem; color:var(--text-light); }
+
+    .cta-banner {
+      margin:0 5% 5rem;
+      background:linear-gradient(135deg,rgba(224,112,144,.18),rgba(160,112,208,.18),rgba(80,184,216,.18));
+      backdrop-filter:blur(20px);
+      border:1.5px solid var(--glass-border);
+      border-radius:28px; padding:3.5rem 4%;
+      text-align:center; box-shadow:var(--shadow);
+      position:relative; overflow:hidden; z-index:1;
+    }
+    .cta-banner::before {
+      content:''; position:absolute; inset:0;
+      background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.5),transparent 70%);
+    }
+    .cta-banner h2 {
+      font-family:'Playfair Display',serif;
+      font-size:clamp(1.8rem,3vw,2.6rem); font-weight:900;
+      margin-bottom:.9rem; position:relative;
+    }
+    .cta-banner p { font-size:1rem; color:var(--text-mid); margin-bottom:1.8rem; position:relative; }
+    .cta-banner .btn { position:relative; }
+
+    footer {
+      position:relative; z-index:1;
+      background:rgba(255,248,245,.72); backdrop-filter:blur(16px);
+      border-top:1px solid var(--glass-border);
+      padding:3rem 5% 1.5rem;
+      display:flex; flex-wrap:wrap; gap:2rem;
+      justify-content:space-between; align-items:flex-start;
+    }
+    .footer-brand .nav-logo { font-size:1.4rem; }
+    .footer-brand p { font-size:.85rem; color:var(--text-light); margin-top:.5rem; max-width:220px; }
+    .footer-links h4 { font-size:.88rem; font-weight:700; margin-bottom:.8rem; }
+    .footer-links a { display:block; font-size:.83rem; color:var(--text-mid); text-decoration:none; margin-bottom:.4rem; transition:color .2s; }
+    .footer-links a:hover { color:var(--text-dark); }
+    .footer-bottom {
+      width:100%; border-top:1px solid rgba(200,180,220,.25);
+      padding-top:1rem; margin-top:1rem;
+      display:flex; justify-content:space-between; align-items:center;
+      flex-wrap:wrap; gap:.5rem;
+    }
+    .footer-bottom p { font-size:.78rem; color:var(--text-light); }
+
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(24px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .reveal { opacity:0; transform:translateY(28px); transition: opacity .65s ease, transform .65s ease; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+
+    @media(max-width:768px) {
+      .hero { flex-direction:column; text-align:center; }
+      .hero-actions { justify-content:center; }
+      .hero-visual { display:none; }
+      .how-steps::before { display:none; }
+      .events-preview-header { flex-direction:column; align-items:flex-start; }
+      footer { flex-direction:column; }
+    }
+
+    /* <!-- ONLY SHOWING CHANGED PARTS + NEW FEATURES --> */
+
+/* <!-- 🔥 ADD THIS INSIDE <style> --> */
+
+.hero {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+
+  padding-top: calc(var(--nav-h) + 3rem);
+  min-height: calc(100vh - var(--nav-h));
+}
+
+/* slides */
+.hero-slide {
+  position: absolute;
+  inset: 0;
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  transition: transform 1s ease-in-out;
+}
+
+/* visible slide */
+.hero-slide.current {
+  transform: translateX(0);
+  z-index: 2;
+}
+
+/* next slide starts from RIGHT */
+.hero-slide.next {
+  transform: translateX(100%);
+  z-index: 1;
+}
+
+/* current slide exits to LEFT */
+.hero-slide.exit {
+  transform: translateX(-100%);
+  z-index: 1;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.2); /* light overlay */
+  pointer-events: none;
+}
+
+.fade {
+  animation: none;  /* ❌ remove jump animation */
+}
+.overlay {
+  z-index: 0;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 2;
+}
+.overlay {
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(2px);
+}
+
+/* background blur */
+.hero-glass {
+  width: 380px;              /* 🔽 reduced */
+  padding: 1.5rem;           /* 🔽 reduced */
+  border-radius: 20px;
+
+  background: rgba(255,255,255,0.35);
+  backdrop-filter: blur(18px);
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;                 /* 🔽 reduced */
+
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+}
+
+/* =============================================
+   🌐 BILINGUAL LANGUAGE TOGGLE — NEW STYLES
+   ============================================= */
+.lang-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(255,255,255,0.45);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid var(--glass-border);
+  border-radius: 50px;
+  padding: 3px;
+  box-shadow: 0 2px 12px rgba(160,100,180,.12);
+}
+
+.lang-btn {
+  padding: .38rem .9rem;
+  border: none;
+  border-radius: 50px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .25s ease;
+  background: transparent;
+  color: var(--text-mid);
+  line-height: 1;
+}
+
+.lang-btn.active {
+  background: linear-gradient(135deg, #e07090, #a070d0);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(160,80,180,.3);
+}
+
+.lang-btn:not(.active):hover {
+  color: var(--text-dark);
+  background: rgba(255,255,255,0.5);
+}
+
+/* Tamil font rendering tweak */
+html[lang="ta"] body {
+  font-family: 'DM Sans', 'Noto Sans Tamil', sans-serif;
+  font-size: 0.97em;
+  line-height: 1.6;
+}
+  </style>
+</head>
+<body>
+
+  <div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<nav>
+  <div class="nav-logo">Eventra</div>
+
+  <ul class="nav-links">
+    <li><a href="home.html" data-en="Home" data-ta="முகப்பு">Home</a></li>
+    <li><a href="login.html" data-en="Events" data-ta="நிகழ்வுகள்">Events</a></li>
+    <li><a href="login.html" data-en="Add Event" data-ta="நிகழ்வு சேர்">Add Event</a></li>
+    <li><a href="login.html" data-en="Dashboard" data-ta="டாஷ்போர்டு">Dashboard</a></li>
+  </ul>
+
+  <div style="display:flex; gap:.8rem; align-items:center;">
+    <!-- 🌐 Language Toggle -->
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" id="btn-ta" onclick="setLang('ta')">தமிழ்</button>
+    </div>
+    <!-- ✅ Sign In Button -->
+    <a href="login.html" class="btn btn-primary" data-en="Sign In" data-ta="உள்நுழை">Sign In</a>
+  </div>
+</nav>
+
+<section class="hero" id="hero">
+
+  <!-- 🔥 ADD THESE TWO LINES (slider layers) -->
+  <div class="hero-slide current"></div>
+  <div class="hero-slide next"></div>
+
+  <!-- Your existing content -->
+  <div class="hero-copy">
+
+    <div class="hero-glass">
+
+      <h1>
+        <span data-en="Discover &amp; Create" data-ta="கண்டறியுங்கள் &amp; உருவாக்குங்கள்">Discover &amp; Create</span><br>
+        <span class="accent" data-en="Amazing Events ✦" data-ta="அற்புத நிகழ்வுகள் ✦">Amazing Events ✦</span>
+      </h1>
+
+      <p class="hero-sub" data-en="Eventra is your all-in-one platform to create events, manage registrations, and explore workshops, concerts, and conferences near you." data-ta="Eventra என்பது நிகழ்வுகளை உருவாக்க, பதிவுகளை நிர்வகிக்க மற்றும் உங்களுக்கு அருகில் உள்ள பட்டறைகள், கச்சேரிகள் மற்றும் மாநாடுகளை ஆராய உதவும் ஒரே தளம்.">
+        Eventra is your all-in-one platform to create events, manage registrations,
+        and explore workshops, concerts, and conferences near you.
+      </p>
+
+      <div class="hero-actions">
+        <a href="login.html" class="btn btn-primary" data-en="🚀 Create Your Event" data-ta="🚀 உங்கள் நிகழ்வை உருவாக்குங்கள்">🚀 Create Your Event</a>
+      </div>
+
+    </div>
+
+    <p style="margin-top:1rem; font-size:0.9rem; color:#7a6080;"
+       data-en="🎟️ Create • Manage • Attend events easily"
+       data-ta="🎟️ உருவாக்குங்கள் • நிர்வகியுங்கள் • நிகழ்வுகளில் கலந்துகொள்ளுங்கள்">
+      🎟️ Create • Manage • Attend events easily
+    </p>
+
+  </div>
+
+</section>
+<div class="stats">
+  <div class="stat-card reveal">
+    <div class="stat-num">12K+</div>
+    <div class="stat-label" data-en="Events Created" data-ta="உருவாக்கப்பட்ட நிகழ்வுகள்">Events Created</div>
+  </div>
+
+  <div class="stat-card reveal">
+    <div class="stat-num">98K+</div>
+    <div class="stat-label" data-en="Participants Registered" data-ta="பதிவு செய்த பங்கேற்பாளர்கள்">Participants Registered</div>
+  </div>
+
+  <div class="stat-card reveal">
+    <div class="stat-num">160+</div>
+    <div class="stat-label" data-en="Cities Worldwide" data-ta="உலகெங்கும் நகரங்கள்">Cities Worldwide</div>
+  </div>
+</div>
+
+<section class="events-preview">
+  <div class="events-preview-header reveal">
+    <div>
+      <div class="section-tag" data-en="Upcoming" data-ta="வரவிருக்கும்">Upcoming</div>
+      <h2 class="section-title" data-en="Events happening soon" data-ta="விரைவில் நடக்கும் நிகழ்வுகள்">Events happening soon</h2>
+    </div>
+
+    <a href="events.html" class="btn btn-ghost" data-en="View all →" data-ta="அனைத்தும் காண்க →">View all →</a>
+  </div>
+
+  <div class="events-row">
+
+    <!-- Event 1 -->
+    <a href="login.html" class="event-card reveal">
+      <div class="ec-img ec-img-1">🎨</div>
+
+      <div class="ec-body">
+        <div class="ec-tag" data-en="Workshop" data-ta="பட்டறை">Workshop</div>
+        <div class="ec-title" data-en="UI / UX Masterclass 2025" data-ta="UI / UX மாஸ்டர்கிளாஸ் 2025">UI / UX Masterclass 2025</div>
+
+        <div class="ec-meta">
+          <span>📅 <span class="date"></span></span>
+          <span>📍 Mumbai</span>
+        </div>
+
+        <div class="ec-footer">
+          <span class="ec-spots" data-en="42 spots left" data-ta="42 இடங்கள் மீதம்">42 spots left</span>
+          <span class="ec-btn" data-en="View Details →" data-ta="விவரங்கள் காண்க →">View Details →</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Event 2 -->
+    <a href="login.html" class="event-card reveal">
+      <div class="ec-img ec-img-2">🎵</div>
+
+      <div class="ec-body">
+        <div class="ec-tag" data-en="Music" data-ta="இசை">Music</div>
+        <div class="ec-title" data-en="Indie Sound Fest 2025" data-ta="இண்டி சவுண்ட் பெஸ்ட் 2025">Indie Sound Fest 2025</div>
+
+        <div class="ec-meta">
+          <span>📅 <span class="date"></span></span>
+          <span>📍 Bangalore</span>
+        </div>
+
+        <div class="ec-footer">
+          <span class="ec-spots" data-en="120 spots left" data-ta="120 இடங்கள் மீதம்">120 spots left</span>
+          <span class="ec-btn" data-en="View Details →" data-ta="விவரங்கள் காண்க →">View Details →</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Event 3 -->
+    <a href="login.html" class="event-card reveal">
+      <div class="ec-img ec-img-3">💻</div>
+
+      <div class="ec-body">
+        <div class="ec-tag" data-en="Tech" data-ta="தொழில்நுட்பம்">Tech</div>
+        <div class="ec-title" data-en="AI &amp; Future Conf 2025" data-ta="AI &amp; எதிர்காலம் மாநாடு 2025">AI &amp; Future Conf 2025</div>
+
+        <div class="ec-meta">
+          <span>📅 <span class="date"></span></span>
+          <span>📍 Delhi</span>
+        </div>
+
+        <div class="ec-footer">
+          <span class="ec-spots" data-en="8 spots left" data-ta="8 இடங்கள் மீதம்">8 spots left</span>
+          <span class="ec-btn" data-en="View Details →" data-ta="விவரங்கள் காண்க →">View Details →</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+  <section class="how">
+    <div class="reveal">
+      <div class="section-tag" data-en="Process" data-ta="செயல்முறை">Process</div>
+      <h2 class="section-title" data-en="Launch your event in 4 simple steps" data-ta="4 எளிய படிகளில் உங்கள் நிகழ்வை தொடங்குங்கள்">Launch your event in 4 simple steps</h2>
+    </div>
+    <div class="how-steps">
+      <div class="step-card reveal">
+        <div class="step-num">1</div>
+        <h3 data-en="Create Event" data-ta="நிகழ்வை உருவாக்கு">Create Event</h3>
+        <p data-en="Fill in your event details, set the date, venue and ticket capacity." data-ta="உங்கள் நிகழ்வு விவரங்களை நிரப்பி, தேதி, இடம் மற்றும் டிக்கெட் எண்ணிக்கையை அமையுங்கள்.">Fill in your event details, set the date, venue and ticket capacity.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-num">2</div>
+        <h3 data-en="Customise Page" data-ta="பக்கத்தை தனிப்பயனாக்கு">Customise Page</h3>
+        <p data-en="Add images, a description and your unique event branding." data-ta="படங்கள், விளக்கம் மற்றும் உங்கள் தனித்துவமான நிகழ்வு அடையாளத்தை சேர்க்கவும்.">Add images, a description and your unique event branding.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-num">3</div>
+        <h3 data-en="Share &amp; Promote" data-ta="பகிர் &amp; விளம்பரப்படுத்து">Share &amp; Promote</h3>
+        <p data-en="Share your event link across socials and email lists in one click." data-ta="உங்கள் நிகழ்வு இணைப்பை சமூக வலைத்தளங்கள் மற்றும் மின்னஞ்சல்களில் ஒரே கிளிக்கில் பகிரவும்.">Share your event link across socials and email lists in one click.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-num">4</div>
+        <h3 data-en="Track &amp; Grow" data-ta="கண்காணி &amp; வளர்">Track &amp; Grow</h3>
+        <p data-en="Monitor registrations live and download attendee reports any time." data-ta="பதிவுகளை நேரடியாக கண்காணித்து, கலந்துகொண்டவர் அறிக்கைகளை எந்த நேரத்திலும் பதிவிறக்கவும்.">Monitor registrations live and download attendee reports any time.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="testi">
+    <div class="reveal">
+      <div class="section-tag" data-en="Testimonials" data-ta="சான்றுரைகள்">Testimonials</div>
+      <h2 class="section-title" data-en="Loved by event creators" data-ta="நிகழ்வு உருவாக்குநர்களால் விரும்பப்படுகிறது">Loved by event creators</h2>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text"
+           data-en='"Eventra made our annual design summit feel effortless. The registration flow is so smooth that we had zero drop-offs!"'
+           data-ta='"Eventra எங்கள் வருடாந்திர வடிவமைப்பு மாநாட்டை மிகவும் எளிதாக்கியது. பதிவு செயல்முறை மிகவும் சுமுகமாக இருந்தது!"'>
+          "Eventra made our annual design summit feel effortless. The registration flow is so smooth that we had zero drop-offs!"
+        </p>
+        <div class="testi-author">
+          <div class="testi-av tav1">P</div>
+          <div>
+            <div class="testi-name">Priya Sharma</div>
+            <div class="testi-role" data-en="Design Lead, CreativeCo" data-ta="வடிவமைப்பு தலைமை, CreativeCo">Design Lead, CreativeCo</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text"
+           data-en='"From creating our tech conference to managing 800+ attendees, Eventra handled everything beautifully."'
+           data-ta='"எங்கள் தொழில்நுட்ப மாநாட்டை உருவாக்குவதிலிருந்து 800+ கலந்துகொண்டவர்களை நிர்வகிக்க, Eventra அனைத்தையும் அழகாக கையாண்டது."'>
+          "From creating our tech conference to managing 800+ attendees, Eventra handled everything beautifully."
+        </p>
+        <div class="testi-author">
+          <div class="testi-av tav2">R</div>
+          <div>
+            <div class="testi-name">Rohan Mehta</div>
+            <div class="testi-role" data-en="CTO, StartupHub" data-ta="தொழில்நுட்ப இயக்குநர், StartupHub">CTO, StartupHub</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text"
+           data-en='"The dashboard gives me real-time clarity I never had before. Our events have grown 3× since switching to Eventra."'
+           data-ta='"டாஷ்போர்டு எனக்கு இதற்கு முன் இல்லாத நேரடி தெளிவை தருகிறது. Eventra க்கு மாறியதிலிருந்து எங்கள் நிகழ்வுகள் 3 மடங்கு வளர்ந்தன."'>
+          "The dashboard gives me real-time clarity I never had before. Our events have grown 3× since switching to Eventra."
+        </p>
+        <div class="testi-author">
+          <div class="testi-av tav3">A</div>
+          <div>
+            <div class="testi-name">Aanya Kapoor</div>
+            <div class="testi-role" data-en="Community Manager, DevCircle" data-ta="சமூக மேலாளர், DevCircle">Community Manager, DevCircle</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="cta-banner reveal">
+    <h2 data-en="Ready to create something unforgettable?" data-ta="மறக்கமுடியாத ஒன்றை உருவாக்க தயாரா?">Ready to create something unforgettable?</h2>
+    <p data-en="Join thousands of event creators and start planning your next masterpiece today." data-ta="ஆயிரக்கணக்கான நிகழ்வு உருவாக்குநர்களுடன் இணைந்து உங்கள் அடுத்த தலைசிறந்த படைப்பை இன்றே திட்டமிடுங்கள்.">Join thousands of event creators and start planning your next masterpiece today.</p>
+    <a href="add-event.html" class="btn btn-primary" style="font-size:1rem;padding:.9rem 2.2rem;"
+       data-en="🚀 Get Started — It's Free"
+       data-ta="🚀 தொடங்குங்கள் — இலவசம்">
+      🚀 Get Started — It's Free
+    </a>
+  </div>
+
+  <footer>
+    <div class="footer-brand">
+      <div class="nav-logo">Eventra</div>
+      <p data-en="Smart event management designed for the modern creator." data-ta="நவீன படைப்பாளர்களுக்காக வடிவமைக்கப்பட்ட சிறந்த நிகழ்வு மேலாண்மை.">Smart event management designed for the modern creator.</p>
+    </div>
+    <div class="footer-links">
+      <h4 data-en="Product" data-ta="தயாரிப்பு">Product</h4>
+      <a href="login.html" data-en="Browse Events" data-ta="நிகழ்வுகளை உலாவுக">Browse Events</a>
+      <a href="login.html" data-en="Create Event" data-ta="நிகழ்வை உருவாக்கு">Create Event</a>
+      <a href="login.html" data-en="Dashboard" data-ta="டாஷ்போர்டு">Dashboard</a>
+    </div>
+    <div class="footer-links">
+      <h4 data-en="Company" data-ta="நிறுவனம்">Company</h4>
+      <a href="#" data-en="About Us" data-ta="எங்களைப் பற்றி">About Us</a>
+      <a href="#" data-en="Blog" data-ta="வலைப்பதிவு">Blog</a>
+      <a href="#" data-en="Careers" data-ta="வேலைவாய்ப்புகள்">Careers</a>
+    </div>
+    <div class="footer-links">
+      <h4 data-en="Support" data-ta="ஆதரவு">Support</h4>
+      <a href="#" data-en="Help Centre" data-ta="உதவி மையம்">Help Centre</a>
+      <a href="#" data-en="Privacy Policy" data-ta="தனியுரிமைக் கொள்கை">Privacy Policy</a>
+      <a href="#" data-en="Terms of Service" data-ta="சேவை விதிமுறைகள்">Terms of Service</a>
+    </div>
+    <div class="footer-bottom">
+      <p data-en="©️ 2025 Eventra. Crafted with ♥️ for event creators everywhere." data-ta="©️ 2025 Eventra. எங்கும் உள்ள நிகழ்வு உருவாக்குநர்களுக்காக ♥️ உடன் உருவாக்கப்பட்டது.">©️ 2025 Eventra. Crafted with ♥️ for event creators everywhere.</p>
+      <p data-en="🌍 All rights reserved." data-ta="🌍 அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.">🌍 All rights reserved.</p>
+    </div>
+  </footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  /* =========================
+     🎯 REVEAL ANIMATION
+  ========================== */
+  const reveals = document.querySelectorAll('.reveal');
+
+  if ('IntersectionObserver' in window) {
+    const revealObserver = new IntersectionObserver(entries => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => entry.target.classList.add('visible'), i * 80);
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    reveals.forEach(el => revealObserver.observe(el));
+  } else {
+    reveals.forEach(el => el.classList.add('visible'));
+  }
+
+  /* =========================
+     🎯 STATS COUNTER
+  ========================== */
+  document.querySelectorAll('.stat-num').forEach(el => {
+    let hasAnimated = false;
+
+    const text = el.textContent;
+    const num = parseFloat(text.replace(/[^0-9.]/g, ''));
+    const suffix = text.replace(/[0-9.]/g, '');
+
+    const animate = (timestamp, start = null) => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / 1800, 1);
+
+      el.textContent = (num * progress).toFixed(num % 1 ? 1 : 0) + suffix;
+
+      if (progress < 1) requestAnimationFrame(t => animate(t, start));
+    };
+
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && !hasAnimated) {
+        hasAnimated = true;
+        requestAnimationFrame(animate);
+        observer.disconnect();
+      }
+    });
+
+    observer.observe(el);
+  });
+
+  /* =========================
+     🎯 BACKGROUND IMAGE SLIDER
+  ========================== */
+  const images = [
+    "images/img1.jpeg",
+    "images/img2.jpeg",
+    "images/img3.jpeg",
+    "images/img4.jpeg",
+    "images/img5.jpeg",
+    "images/img6.jpeg",
+    "images/img7.jpeg",
+    "images/img8.jpeg",
+    "images/img9.jpeg"
+  ];
+
+  let currentIndex = 0;
+  const hero = document.getElementById("hero");
+
+  function changeBackground() {
+    if (!hero || images.length === 0) return;
+
+    const img = new Image();
+    img.src = images[currentIndex];
+
+    img.onload = () => {
+      hero.style.backgroundImage = `url('${images[currentIndex]}')`;
+
+      hero.classList.add("fade");
+      setTimeout(() => hero.classList.remove("fade"), 800);
+
+      currentIndex = (currentIndex + 1) % images.length;
+    };
+
+    img.onerror = () => {
+      console.warn("Image failed:", images[currentIndex]);
+      currentIndex = (currentIndex + 1) % images.length;
+    };
+  }
+
+  changeBackground();
+  setInterval(changeBackground, 5000);
+
+  /* =========================
+     🎯 DYNAMIC EVENT DATES
+  ========================== */
+  const dateElements = document.querySelectorAll(".date");
+
+  dateElements.forEach((el, i) => {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + (i + 1) * 3);
+
+    const options = { day: 'numeric', month: 'short' };
+    el.textContent = futureDate.toLocaleDateString('en-IN', options);
+  });
+
+});
+</script>
+<script>
+const slides = document.querySelectorAll(".hero-slide");
+let index = 0;
+
+setInterval(() => {
+  const current = slides[index];
+  const nextIndex = (index + 1) % slides.length;
+  const next = slides[nextIndex];
+
+  // reset all slides
+  slides.forEach(s => {
+    s.classList.remove("current", "next", "exit");
+  });
+
+  // current goes LEFT ⬅️
+  current.classList.add("exit");
+
+  // next comes from RIGHT ➡️
+  next.classList.add("current");
+
+  // prepare upcoming slide on right
+  const upcomingIndex = (nextIndex + 1) % slides.length;
+  slides[upcomingIndex].classList.add("next");
+
+  index = nextIndex;
+
+}, 2000); // ⏱️ 2 sec
+</script>
+
+<!-- =============================================
+     🌐 BILINGUAL LANGUAGE SWITCHER SCRIPT
+     ============================================= -->
+<script>
+  let currentLang = localStorage.getItem('eventra-lang') || 'en';
+
+  function setLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('eventra-lang', lang);
+
+    // Update html lang attribute
+    document.documentElement.lang = lang === 'ta' ? 'ta' : 'en';
+
+    // Toggle active button style
+    document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+    document.getElementById('btn-ta').classList.toggle('active', lang === 'ta');
+
+    // Update all elements with data-en / data-ta attributes
+    document.querySelectorAll('[data-en]').forEach(el => {
+      const text = el.getAttribute('data-' + lang);
+      if (text !== null) {
+        // For elements that contain child elements (like h1 with span), skip innerHTML swap
+        // Only update if the element has no child element nodes (pure text holders)
+        const hasElementChildren = Array.from(el.childNodes).some(n => n.nodeType === 1);
+        if (!hasElementChildren) {
+          el.innerHTML = text;
+        }
+      }
+    });
+
+    // Special handling: h1 children (span tags inside h1)
+    document.querySelectorAll('h1 [data-en], h1 [data-ta]').forEach(el => {
+      const text = el.getAttribute('data-' + lang);
+      if (text !== null) el.innerHTML = text;
+    });
+  }
+
+  // Apply saved language on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    setLang(currentLang);
+  });
+</script>
+
+<script>
+  /* =========================
+     🎯 LOGOUT
+  ========================== */
+  window.logout = function () {
+    localStorage.removeItem("email");
+    localStorage.removeItem("loggedIn");
+    window.location.replace("login.html");
+  };
+</script>
+</body>
+</html>
